@@ -1,0 +1,28 @@
+# FastAPI and ASGI server
+fastapi
+uvicorn
+
+# Database and ORM
+sqlalchemy
+databases
+
+# Data validation and settings management
+pydantic
+
+# Authentication and token management
+python-jose[cryptography]
+passlib[bcrypt]
+
+# PDF generation for AI-Tutor responses
+fpdf
+
+# Streamlit for frontend dashboard
+streamlit
+
+# Environment variable management
+python-dotenv
+
+# AI API and retrieval libraries
+openai
+faiss-cpu
+numpy
