@@ -10,7 +10,14 @@ This project is an AI-powered educational platform that provides an interactive 
 - **Progress Tracker:** Monitors user progress across lessons, quizzes, and courses.
 
 ## Project Structure
-my_capstone_project/ ├── README.md # Project overview and instructions ├── requirements.txt # Python dependencies for both frontend and backend ├── Dockerfile # Containerization configuration for deployment ├── .env.example # Example environment variables file ├── backend/ # FastAPI backend code with AI services, routes, and database ├── frontend/ # Streamlit frontend for user interface ├── scripts/ # Helper scripts (e.g., database initialization, server startup) └── docs/ # Project documentation
+my_capstone_project/ 
+   ├── README.md # Project overview and instructions 
+   ├── requirements.txt # Python dependencies for both frontend and backend 
+   ├── Dockerfile # Containerization configuration for deployment 
+   ├── .env.example # Example environment variables file 
+   ├── backend/ # FastAPI backend code with AI services, routes, and database 
+   ├── frontend/ # Streamlit frontend for user interface 
+   ├── scripts/ # Helper scripts (e.g., database initialization, server startup) └── docs/ # Project documentation
 
 ## Setup Instructions
 
