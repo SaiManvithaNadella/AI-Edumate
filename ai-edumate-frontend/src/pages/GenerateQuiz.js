@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
 
-// Helper function to parse the quiz text into structured questions
+// Helper function to parse quiz text into structured questions
 function parseQuizOutput(quizText) {
   const blocks = quizText.split(/Question\s*\d+:/i).filter(b => b.trim() !== '');
   const questions = [];
@@ -11,22 +11,13 @@ function parseQuizOutput(quizText) {
     const questionText = lines[0] || `Question ${index + 1}`;
     let options = [];
     let answer = '';
-    let optionLines = [];
-    let answerLine = '';
-
     lines.slice(1).forEach(line => {
-      if (line.match(/^[ABCD]\.\s/i)) {
-        optionLines.push(line);
+      if (/^[ABCD]\./i.test(line)) {
+        options.push(line.replace(/^[ABCD]\.\s*/, ''));
       } else if (line.toLowerCase().startsWith("answer:")) {
-        answerLine = line;
+        answer = line.split(":")[1].trim();
       }
     });
-
-    options = optionLines.map(optLine => optLine.replace(/^[ABCD]\.\s*/i, '').trim());
-    if (answerLine) {
-      answer = answerLine.split(':')[1]?.trim() || '';
-    }
-
     questions.push({
       question: questionText,
       options,
@@ -38,11 +29,8 @@ function parseQuizOutput(quizText) {
 }
 
 function GenerateQuiz() {
-  // State for lesson contents (flashcard style dropdown)
   const [lessonContents, setLessonContents] = useState([]);
   const [selectedContentId, setSelectedContentId] = useState('');
-  
-  // Quiz data state
   const [quizQuestions, setQuizQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswer, setUserAnswer] = useState('');
@@ -50,14 +38,14 @@ function GenerateQuiz() {
   const [quizError, setQuizError] = useState('');
 
   useEffect(() => {
-    const fetchContents = async () => {
+    async function fetchContents() {
       try {
         const res = await api.get('/quiz/contents');
         setLessonContents(res.data);
       } catch (error) {
         console.error('Error fetching lesson contents:', error);
       }
-    };
+    }
     fetchContents();
   }, []);
 
@@ -137,79 +125,55 @@ function GenerateQuiz() {
   const currentQuestion = quizQuestions[currentQuestionIndex];
 
   return (
-    <div className="max-w-3xl mx-auto p-6 bg-white shadow rounded">
-      <h2 className="text-2xl font-bold mb-4">Generate Quiz</h2>
-      <form onSubmit={handleGenerateQuiz} className="mb-6">
-        <div>
-          <label className="block font-medium">Select Lesson Content:</label>
-          <select
-            value={selectedContentId}
-            onChange={(e) => setSelectedContentId(e.target.value)}
-            required
-            className="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300"
-          >
-            <option value="">-- Select a Lesson --</option>
-            {lessonContents.map(item => (
-              <option key={item.content_id} value={item.content_id}>
-                {item.course_name} - {item.lesson_name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <button type="submit" className="mt-4 bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition">
-          Generate Quiz
-        </button>
+    <div className="quiz-container">
+      <h2>Generate Quiz</h2>
+      <form onSubmit={handleGenerateQuiz}>
+        <label>Select Lesson Content:</label>
+        <select
+          value={selectedContentId}
+          onChange={(e) => setSelectedContentId(e.target.value)}
+          required
+        >
+          <option value="">-- Select a Lesson --</option>
+          {lessonContents.map(item => (
+            <option key={item.content_id} value={item.content_id}>
+              {item.course_name} - {item.lesson_name}
+            </option>
+          ))}
+        </select>
+        <button type="submit">Generate Quiz</button>
       </form>
-      
-      {quizError && (
-        <div className="text-red-600 font-semibold mb-4">
-          {quizError}
-        </div>
-      )}
-
+      {quizError && <div className="quiz-error">{quizError}</div>}
       {quizQuestions.length > 0 && !quizError && (
-        <div className="border p-6 rounded">
-          <h3 className="text-xl font-bold mb-2">
-            Question {currentQuestionIndex + 1} of {quizQuestions.length}
-          </h3>
-          <p className="mb-4">{currentQuestion.question}</p>
-          <div className="space-y-2">
+        <div className="quiz-question-container">
+          <div className="quiz-question">
+            <p>Question {currentQuestionIndex + 1} of {quizQuestions.length}</p>
+            <p>{currentQuestion.question}</p>
+          </div>
+          <div className="quiz-options">
             {currentQuestion.options.map((opt, idx) => {
               const letter = String.fromCharCode(65 + idx);
               return (
                 <div key={idx}>
-                  <label className="flex items-center">
+                  <label>
                     <input
                       type="radio"
                       name="quizOption"
                       value={letter}
                       checked={userAnswer === letter}
                       onChange={handleOptionChange}
-                      className="mr-2"
                     />
-                    <span>{letter}. {opt}</span>
+                    {letter}. {opt}
                   </label>
                 </div>
               );
             })}
           </div>
-          <div className="mt-4">
-            <button onClick={handleCheckAnswer} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
-              Check Answer
-            </button>
-          </div>
-          {feedback && (
-            <div className="mt-3 font-semibold">
-              {feedback}
-            </div>
-          )}
-          <div className="mt-4 flex justify-between">
-            <button onClick={handlePrevious} disabled={currentQuestionIndex === 0} className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition">
-              Previous
-            </button>
-            <button onClick={handleNext} disabled={currentQuestionIndex === quizQuestions.length - 1} className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition">
-              Next
-            </button>
+          <button onClick={handleCheckAnswer}>Check Answer</button>
+          {feedback && <div className="quiz-feedback">{feedback}</div>}
+          <div className="quiz-navigation">
+            <button onClick={handlePrevious} disabled={currentQuestionIndex === 0}>Previous</button>
+            <button onClick={handleNext} disabled={currentQuestionIndex === quizQuestions.length - 1}>Next</button>
           </div>
         </div>
       )}

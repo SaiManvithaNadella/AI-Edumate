@@ -1,83 +1,64 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../api';
 
 function GenerateCourse() {
   const [topic, setTopic] = useState('');
   const [numModules, setNumModules] = useState(5);
-  const [outlineResponse, setOutlineResponse] = useState(null);
-  const [courseList, setCourseList] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  const handleGenerateOutline = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
       const res = await api.post('/course/generate-outline', null, {
         params: { topic, num_modules: numModules }
       });
-      setOutlineResponse(res.data);
-    } catch (error) {
-      console.error(error);
-      setOutlineResponse({ error: 'Error generating course outline.' });
-    }
-  };
+      console.log("DEBUG: response from backend =>", res.data);
 
-  const handleGetCourses = async () => {
-    try {
-      const res = await api.get('/course/list');
-      setCourseList(res.data);
+      // Use the field name as returned by the backend
+      const generatedOutline = res.data.outline_text || "";
+      console.log("DEBUG: generatedOutline =>", generatedOutline);
+
+      setLoading(false);
+      // Pass the outline to the GenerateLesson page with state
+      navigate("/generate-lesson", { state: { outline: generatedOutline } });
     } catch (error) {
-      console.error('Error fetching courses:', error);
+      console.error("Error generating course outline:", error);
+      setLoading(false);
+      alert("Error generating course outline. Please try again.");
     }
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-white shadow rounded">
-      <h2 className="text-2xl font-bold mb-4">Generate Course Outline</h2>
-      <form onSubmit={handleGenerateOutline} className="space-y-4">
+    <div className="page-placeholder">
+      <h2>Generate Course Outline</h2>
+      <form onSubmit={handleSubmit}>
         <div>
-          <label className="block font-medium">Topic:</label>
+          <label>Topic:</label><br />
           <input
             type="text"
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
             required
-            className="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300"
+            style={{ padding: "8px", width: "300px", marginBottom: "10px" }}
           />
         </div>
         <div>
-          <label className="block font-medium">Number of Modules:</label>
+          <label>Number of Modules:</label><br />
           <input
             type="number"
             value={numModules}
             onChange={(e) => setNumModules(e.target.value)}
             required
-            className="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300"
+            style={{ padding: "8px", width: "100px", marginBottom: "10px" }}
           />
         </div>
-        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
-          Generate Outline
+        <button type="submit" className="button">
+          {loading ? "Generating..." : "Generate Outline"}
         </button>
       </form>
-      {outlineResponse && (
-        <div className="mt-6">
-          <h3 className="font-bold text-lg">Outline Response:</h3>
-          <pre className="bg-gray-100 p-4 rounded">{JSON.stringify(outlineResponse, null, 2)}</pre>
-        </div>
-      )}
-      <div className="mt-6">
-        <button onClick={handleGetCourses} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
-          Get All Courses
-        </button>
-        {courseList.length > 0 && (
-          <div className="mt-4">
-            <h3 className="font-bold text-lg">Existing Courses:</h3>
-            <ul className="list-disc pl-5">
-              {courseList.map((c) => (
-                <li key={c.course_id}>{c.course_name}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
     </div>
   );
 }

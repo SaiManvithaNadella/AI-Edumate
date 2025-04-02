@@ -9,14 +9,14 @@ function Flashcards() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const fetchContents = async () => {
+    async function fetchContents() {
       try {
         const res = await api.get('/flashcards/contents');
         setLessonContents(res.data);
       } catch (err) {
         console.error('Error fetching lesson contents:', err);
       }
-    };
+    }
     fetchContents();
   }, []);
 
@@ -65,48 +65,31 @@ function Flashcards() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-white shadow rounded">
-      <h2 className="text-2xl font-bold mb-4">Flashcards Generator</h2>
-      <form onSubmit={handleGenerateFlashcards} className="space-y-4">
-        <div>
-          <label className="block font-medium">Select Lesson:</label>
-          <select 
-            value={selectedContentId} 
-            onChange={(e) => setSelectedContentId(e.target.value)}
-            required
-            className="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300"
-          >
-            <option value="">-- Select a Lesson --</option>
-            {lessonContents.map((item) => (
-              <option key={item.content_id} value={item.content_id}>
-                {item.course_name} - {item.lesson_name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <button type="submit" className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 transition">
-          Generate Flashcards
-        </button>
+    <div className="flashcards-container">
+      <h2>Generate Flashcards</h2>
+      <form onSubmit={handleGenerateFlashcards}>
+        <label>Select Lesson:</label>
+        <select 
+          value={selectedContentId} 
+          onChange={(e) => setSelectedContentId(e.target.value)}
+          required
+        >
+          <option value="">-- Select a Lesson --</option>
+          {lessonContents.map(item => (
+            <option key={item.content_id} value={item.content_id}>
+              {item.course_name} - {item.lesson_name}
+            </option>
+          ))}
+        </select>
+        <button type="submit">Generate Flashcards</button>
       </form>
-
-      {error && (
-        <div className="text-red-600 font-semibold mt-4">
-          {error}
-        </div>
-      )}
-
+      {error && <div className="flashcards-error">{error}</div>}
       {flashcards.length > 0 && (
-        <div className="mt-6">
-          <div className="bg-gray-100 p-4 rounded shadow">
-            {flashcards[currentCard]}
-          </div>
-          <div className="mt-4 flex justify-between">
-            <button onClick={handlePrevious} disabled={currentCard === 0} className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition">
-              Previous
-            </button>
-            <button onClick={handleNext} disabled={currentCard === flashcards.length - 1} className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition">
-              Next
-            </button>
+        <div className="flashcards-content">
+          <div className="flashcard">{flashcards[currentCard]}</div>
+          <div className="flashcards-nav">
+            <button onClick={handlePrevious} disabled={currentCard === 0}>Previous</button>
+            <button onClick={handleNext} disabled={currentCard === flashcards.length - 1}>Next</button>
           </div>
         </div>
       )}

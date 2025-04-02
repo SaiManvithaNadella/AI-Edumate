@@ -1,17 +1,20 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey
+# models.py
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime
 from sqlalchemy.ext.declarative import declarative_base
-from pydantic import BaseModel
+from datetime import datetime
 
 Base = declarative_base()
 
-# SQLAlchemy models
+# Existing models
 class Course(Base):
     __tablename__ = "courses"
     course_id = Column(Integer, primary_key=True, index=True)
-    course_name = Column(String)
+    course_name = Column(String, nullable=False)
     title = Column(String)
     overview = Column(Text)
     outcomes = Column(Text)
+    # NEW: Associate the course with a user
+    user_id = Column(Integer, ForeignKey("users.id"))
 
 class Module(Base):
     __tablename__ = "modules"
