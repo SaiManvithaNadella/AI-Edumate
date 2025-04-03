@@ -3,7 +3,6 @@ from sqlalchemy.orm import Session
 from backend.database import SessionLocal
 from backend.openai_utils import generate_openai_response
 from backend.prompts import course_outline_prompt
-from backend.routers.dependencies import get_current_user  # dependency for JWT authentication
 from backend import crud, models
 from backend.parsers import parse_outline 
 import re
