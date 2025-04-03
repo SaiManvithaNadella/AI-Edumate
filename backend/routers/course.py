@@ -63,7 +63,7 @@ def generate_outline(topic: str, num_modules: int, db: Session = Depends(get_db)
     course_obj = crud.create_course(db, {
         "course_name": course_name,
         "title": course_name,
-        "overview": "Auto-generated",
+        "overview": outline,
         "outcomes": "Auto-generated",
     })
     

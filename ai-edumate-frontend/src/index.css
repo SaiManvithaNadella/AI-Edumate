@@ -237,3 +237,131 @@ body {
   display: flex;
   justify-content: space-between;
 }
+
+/* Global Styles */
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background-color: #000; /* Black background */
+  color: #fff;
+}
+
+/* Home Page Container */
+.home-description {
+  max-width: 800px;
+  margin: 60px auto;
+  text-align: center;
+  padding: 20px;
+}
+
+/* Headline & Description */
+.home-description h1 {
+  font-size: 36px;
+  color: #e91e63; /* Pink headline */
+  margin-bottom: 20px;
+}
+
+.home-description p {
+  font-size: 18px;
+  color: #ccc;
+  line-height: 1.5;
+  margin-bottom: 30px;
+}
+
+/* Button Styling */
+.button {
+  display: inline-block;
+  background-color: #e91e63;
+  color: #fff;
+  padding: 12px 24px;
+  text-decoration: none;
+  font-size: 16px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+}
+
+.button:hover {
+  background-color: #c2185b;
+}
+
+/* Divider */
+.divider {
+  margin: 40px 0;
+  border: none;
+  height: 1px;
+  background-color: #444;
+}
+
+/* Chatbot Input Section */
+.chat-input-section {
+  margin-bottom: 20px;
+}
+
+.chat-input {
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+  border: 1px solid #444;
+  border-radius: 4px;
+  background-color: #222;
+  color: #fff;
+}
+
+.chat-button {
+  width: 100%;
+  padding: 10px;
+  background-color: #e91e63;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.chat-button:hover {
+  background-color: #c2185b;
+}
+
+/* Chat History Container */
+.chat-history {
+  max-width: 800px;
+  height: 300px;
+  margin: 20px auto;
+  padding: 10px;
+  background-color: #111;
+  border: 1px solid #444;
+  border-radius: 4px;
+  overflow-y: auto;
+  text-align: left;
+}
+
+/* Chat Bubble Styles */
+.chat-bubble {
+  max-width: 70%;
+  margin: 10px;
+  padding: 10px 15px;
+  border-radius: 20px;
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+
+.user-bubble {
+  background-color: #e91e63;
+  color: #fff;
+  margin-left: auto;
+  text-align: right;
+}
+
+.tutor-bubble {
+  background-color: #444;
+  color: #fff;
+  text-align: left;
+}
+
+/* Chat Placeholder */
+.chat-placeholder {
+  text-align: center;
+  color: #777;
+}
+
+/* You can add additional styles for responsiveness and layout as needed */

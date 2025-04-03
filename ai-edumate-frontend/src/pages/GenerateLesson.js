@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import api from '../api';
 
-// A simple parser function to extract course title, modules, and lessons
+// A simple parser function to extract course title, modules, and lessons (unchanged)
 function parseOutline(outline) {
   if (typeof outline !== "string") {
     console.log("DEBUG: Outline is not a string:", outline);
@@ -16,7 +16,6 @@ function parseOutline(outline) {
   
   lines.forEach(line => {
     if (line.toLowerCase().startsWith("course title:")) {
-      // Split without a limit, then join all parts after the first colon
       const parts = line.split(":");
       if (parts.length > 1) {
         course_name = parts.slice(1).join(":").trim();
@@ -39,10 +38,44 @@ function parseOutline(outline) {
   return { course_name, modules };
 }
 
+// A helper function to transform the AI-generated text into styled HTML
+function formatLessonContent(rawContent) {
+  if (typeof rawContent !== "string") {
+    return "<p>No content available.</p>";
+  }
+
+  const lines = rawContent.split("\n");
+  const htmlLines = lines.map((line) => {
+    const trimmed = line.trim();
+
+    // ### => <h3>
+    if (trimmed.startsWith("### ")) {
+      return `<h3>${trimmed.slice(4)}</h3>`;
+    }
+    // ## => <h2>
+    else if (trimmed.startsWith("## ")) {
+      return `<h2>${trimmed.slice(3)}</h2>`;
+    }
+    // - or * bullet => <li>
+    else if (trimmed.match(/^[-*]\s/)) {
+      return `<li>${trimmed.slice(2)}</li>`;
+    }
+    // Otherwise wrap in <p>
+    else {
+      return `<p>${trimmed}</p>`;
+    }
+  });
+
+  // If you detect <li> lines, you may want to wrap them in <ul> or <ol>:
+  const finalHtml = htmlLines.join("\n");
+  return finalHtml;
+}
+
 function GenerateLesson() {
   const location = useLocation();
-  console.log("DEBUG: location.state =>", location.state); // Check what is passed
+  console.log("DEBUG: location.state =>", location.state); 
   const { outline = "" } = location.state || {};
+
   const [parsedData, setParsedData] = useState({ course_name: "", modules: [] });
   const [selectedModule, setSelectedModule] = useState("");
   const [selectedLesson, setSelectedLesson] = useState("");
@@ -64,12 +97,13 @@ function GenerateLesson() {
     }
   }, [outline]);
 
-  // Get lessons for a given module
+  // Retrieve lessons for the selected module
   const getLessonsForModule = (moduleName) => {
-    const mod = parsedData.modules.find(m => m.module_name === moduleName);
+    const mod = parsedData.modules.find((m) => m.module_name === moduleName);
     return mod ? mod.lessons : [];
   };
 
+  // Generate the lesson content from the AI
   const handleGenerateContent = async () => {
     if (!parsedData.course_name || !selectedModule || !selectedLesson) {
       alert("Please select valid options.");
@@ -81,10 +115,11 @@ function GenerateLesson() {
         params: {
           course_name: parsedData.course_name,
           module_name: selectedModule,
-          lesson_name: selectedLesson
-        }
+          lesson_name: selectedLesson,
+        },
       });
-      setLessonContent(res.data.generated_content || "No content returned.");
+      const rawContent = res.data.generated_content || "No content returned.";
+      setLessonContent(rawContent);
       setLoading(false);
     } catch (error) {
       console.error("Error generating lesson content:", error);
@@ -93,9 +128,12 @@ function GenerateLesson() {
     }
   };
 
+  // Format the lesson content for display
+  const formattedLessonContent = formatLessonContent(lessonContent);
+
   return (
     <div>
-      <h2 style={{ color: "#e91e63" }}>Lesson Generation</h2>
+      <h2 style={{ color: "#e91e63" }}>Generate what you want to learn</h2>
       <div className="lesson-screen">
         {/* Left Side: Display the generated course outline */}
         <div className="lesson-outline">
@@ -104,7 +142,7 @@ function GenerateLesson() {
         </div>
         {/* Right Side: Lesson Content Generation */}
         <div className="lesson-generator">
-          <h2>Generate Lesson Content</h2>
+          <h2>Lesson Content</h2>
           <div className="select-dropdown">
             <label htmlFor="module-select">Select Module:</label><br />
             <select
@@ -142,9 +180,8 @@ function GenerateLesson() {
             {loading ? "Generating..." : "Generate Lesson Content"}
           </button>
           {lessonContent && (
-            <div className="lesson-content">
-              <h3 style={{ color: "#e91e63" }}>Lesson Content:</h3>
-              <p style={{ whiteSpace: "pre-wrap", color: "#ccc" }}>{lessonContent}</p>
+            <div className="lesson-content" 
+                 dangerouslySetInnerHTML={{ __html: formattedLessonContent }}>
             </div>
           )}
         </div>

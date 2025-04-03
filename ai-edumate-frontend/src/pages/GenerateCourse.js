@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
 
@@ -6,8 +6,10 @@ function GenerateCourse() {
   const [topic, setTopic] = useState('');
   const [numModules, setNumModules] = useState(5);
   const [loading, setLoading] = useState(false);
+  const [courses, setCourses] = useState([]);
   const navigate = useNavigate();
 
+  // Generate a new course outline
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -17,18 +19,37 @@ function GenerateCourse() {
       });
       console.log("DEBUG: response from backend =>", res.data);
 
-      // Use the field name as returned by the backend
       const generatedOutline = res.data.outline_text || "";
       console.log("DEBUG: generatedOutline =>", generatedOutline);
 
       setLoading(false);
-      // Pass the outline to the GenerateLesson page with state
+      // Navigate to GenerateLesson page, passing the newly generated outline
       navigate("/generate-lesson", { state: { outline: generatedOutline } });
     } catch (error) {
       console.error("Error generating course outline:", error);
       setLoading(false);
       alert("Error generating course outline. Please try again.");
     }
+  };
+
+  // Fetch existing courses from the DB
+  useEffect(() => {
+    async function fetchCourses() {
+      try {
+        const res = await api.get('/course/list');
+        setCourses(res.data);
+      } catch (error) {
+        console.error("Error fetching courses:", error);
+      }
+    }
+    fetchCourses();
+  }, []);
+
+  // Navigate to GenerateLesson page with the existing course's overview
+  const handleCourseClick = (course) => {
+    // The 'overview' field in the DB now contains the entire outline
+    const outline = course.overview || "";
+    navigate("/generate-lesson", { state: { outline } });
   };
 
   return (
@@ -59,6 +80,32 @@ function GenerateCourse() {
           {loading ? "Generating..." : "Generate Outline"}
         </button>
       </form>
+
+      <hr style={{ margin: "40px 0" }} />
+      <h3>Existing Courses</h3>
+      {courses.length === 0 ? (
+        <p>No courses generated yet.</p>
+      ) : (
+        <ul style={{ listStyle: "none", padding: 0 }}>
+          {courses.map((course) => (
+            <li
+              key={course.course_id}
+              style={{
+                marginBottom: "15px",
+                padding: "10px",
+                backgroundColor: "#222",
+                borderRadius: "4px",
+                cursor: "pointer"
+              }}
+              onClick={() => handleCourseClick(course)}
+            >
+              <h4 style={{ color: "#e91e63", margin: "0 0 5px 0" }}>
+                {course.course_name}
+              </h4>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

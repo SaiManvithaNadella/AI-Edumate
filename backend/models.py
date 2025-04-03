@@ -13,8 +13,6 @@ class Course(Base):
     title = Column(String)
     overview = Column(Text)
     outcomes = Column(Text)
-    # NEW: Associate the course with a user
-    user_id = Column(Integer, ForeignKey("users.id"))
 
 class Module(Base):
     __tablename__ = "modules"
@@ -40,3 +38,10 @@ class Quiz(Base):
     quiz_id = Column(Integer, primary_key=True, index=True)
     lesson_id = Column(Integer, ForeignKey("lessons.lesson_id"))
     questions = Column(Text)
+
+class ChatHistory(Base):
+    __tablename__ = "chat_history"
+    id = Column(Integer, primary_key=True, index=True)
+    message = Column(Text)
+    response = Column(Text)
+    timestamp = Column(DateTime, default=datetime.utcnow)

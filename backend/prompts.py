@@ -54,7 +54,7 @@ C. <option C>
 D. <option D>
 Answer: <Correct option letter>
 
-Repeat this format for all 5 questions.
+Repeat this format for all 10 questions.
 """
 
 flashcard_prompt = """
