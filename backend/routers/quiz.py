@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from backend.database import SessionLocal
 from backend.openai_utils import generate_openai_response
-from backend.prompts import quiz_prompt  # Make sure this prompt contains {course_name}, {module_name}, {lesson_name}
+from backend.prompts import quiz_prompt  
 from backend import crud, models
 
 router = APIRouter(prefix="/quiz", tags=["Quiz"])
@@ -100,3 +100,11 @@ def generate_quiz(content_id: int, db: Session = Depends(get_db)):
         "message": "Quiz generated and saved.",
         "quiz": quiz_output
     }
+@router.get("/count")
+def get_quiz_count(db: Session = Depends(get_db)):
+    """
+    Returns the count of records in the quizzes table.
+    Example response: { "count": 7 }
+    """
+    count = db.query(models.Quiz).count()
+    return {"count": count}

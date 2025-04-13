@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from backend.routers import course, lesson, quiz, flashcards, module, tutor
+from backend.routers import course, lesson, quiz, flashcards, module, tutor, lesson_content
 from fastapi.middleware.cors import CORSMiddleware
 from backend.database import init_db
 
@@ -20,6 +20,7 @@ app.include_router(course.router)
 app.include_router(lesson.router)
 app.include_router(module.router)
 app.include_router(quiz.router)
+app.include_router(lesson_content.router)
 app.include_router(flashcards.router)
 app.include_router(tutor.router)
 

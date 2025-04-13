@@ -128,13 +128,13 @@ function GenerateQuiz() {
     <div className="quiz-container">
       <h2>Generate Quiz</h2>
       <form onSubmit={handleGenerateQuiz}>
-        <label>Select Lesson Content:</label>
+        <label>Select Lesson:</label>
         <select
           value={selectedContentId}
           onChange={(e) => setSelectedContentId(e.target.value)}
           required
         >
-          <option value="">-- Select a Lesson --</option>
+          <option value="">-- Select a Lesson you wish to take a quiz on..! --</option>
           {lessonContents.map(item => (
             <option key={item.content_id} value={item.content_id}>
               {item.course_name} - {item.lesson_name}

@@ -364,4 +364,79 @@ body {
   color: #777;
 }
 
+/* Styles for lesson content rendered via react-markdown */
+.lesson-content h1 {
+  font-size: 28px;
+  color: #e91e63;
+  margin-bottom: 16px;
+}
+
+.lesson-content h2 {
+  font-size: 24px;
+  color: #e91e63;
+  margin-bottom: 14px;
+}
+
+.lesson-content h3 {
+  font-size: 20px;
+  color: #e91e63;
+  margin-bottom: 12px;
+}
+
+.lesson-content p {
+  font-size: 16px;
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+
+.lesson-content ul {
+  margin-left: 20px;
+  margin-bottom: 12px;
+}
+
+.lesson-content li {
+  margin-bottom: 8px;
+}
+
+.lesson-content blockquote {
+  border-left: 4px solid #444;
+  padding-left: 12px;
+  color: #aaa;
+  font-style: italic;
+  margin-bottom: 12px;
+}
+
+/* Progress Dashboard Styles */
+.progress-dashboard {
+  margin-top: 40px;
+  padding: 20px;
+  background-color: #111;
+  border: 1px solid #444;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.progress-dashboard h2 {
+  color: #e91e63;
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.progress-charts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 50px;
+}
+
+.progress-chart {
+  width: 250px;
+  height: 250px;
+}
+
+.progress-dashboard p {
+  margin-top: 20px;
+  color: #ccc;
+  font-size: 16px;
+}
 /* You can add additional styles for responsiveness and layout as needed */

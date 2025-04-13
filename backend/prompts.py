@@ -24,11 +24,36 @@ The goal is to produce a clean, parseable curriculum tree for automated ingestio
 """
 
 lesson_prompt_template = """
-You are Coursify, an AI assistant specialized in generating high-quality educational content.
+You are Coursify, an AI assistant specialized in generating comprehensive and detailed educational lesson content. Your job is to create a lesson that not only introduces the topic but builds a deep conceptual understanding using a variety of teaching techniques.
 
-Generate a detailed and structured lesson on the topic: '{lesson_name}', from the module: '{module_name}', which is part of the course: '{course_name}'.
+Generate a highly detailed lesson on the topic: '{lesson_name}', from the module: '{module_name}', which is part of the course: '{course_name}'. Your lesson should include the following sections:
 
-Use clear explanations, examples, subheadings, real-world applications, and follow Bloom’s Taxonomy. Ensure the content is suitable for learners and builds a strong conceptual understanding.
+1. **Overview:**  
+   - Provide an engaging introduction that explains what the lesson is about and why it is important.
+  
+2. **Learning Objectives:**  
+   - List clear objectives aligned with Bloom’s Taxonomy (for example, from remembering and understanding to analyzing, evaluating, and creating).
+
+3. **Key Concepts and Explanations:**  
+   - Break down the topic into key concepts and subtopics.
+   - Explain each concept in detail using simple, accessible language.
+   - Include step-by-step explanations where appropriate.
+
+4. **Examples and Real-World Applications:**  
+   - Provide relevant examples and case studies.
+   - Describe practical applications that relate to real-world scenarios.
+
+5. **Exercises and Questions:**  
+   - Present a few practice exercises or reflective questions to reinforce learning.
+   - Encourage critical thinking by including discussion or problem-solving questions.
+
+6. **Summary and Conclusion:**  
+   - Summarize the key points of the lesson and reinforce the main takeaways.
+   - Suggest next steps or further reading for deepening understanding.
+
+Ensure that your response is well‑structured with clear headings and formatted in a way that enhances readability. Use bullet points, numbered lists, and subheadings as necessary. The lesson should be thorough, detailed, and structured for optimal learning.
+
+By following this format, the output should result in a lesson that is both engaging and instructive, suitable for learners at various levels.
 """
 
 
@@ -40,7 +65,7 @@ Course: {course_name}
 Module: {module_name}
 Lesson: {lesson_name}
 
-Generate a set of 5 challenging multiple-choice questions that test key concepts from the lesson. For each question, include:
+Generate a set of 10 challenging multiple-choice questions that test key concepts from the lesson. For each question, include:
 - The question text.
 - Four answer options labeled A, B, C, and D.
 - A clear indication of the correct answer.

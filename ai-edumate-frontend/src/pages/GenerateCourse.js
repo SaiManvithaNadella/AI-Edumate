@@ -9,21 +9,23 @@ function GenerateCourse() {
   const [courses, setCourses] = useState([]);
   const navigate = useNavigate();
 
-  // Generate a new course outline
+  // Handler to generate a new course outline
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
+      // Call backend API to generate course outline
       const res = await api.post('/course/generate-outline', null, {
         params: { topic, num_modules: numModules }
       });
       console.log("DEBUG: response from backend =>", res.data);
-
+      
+      // Use the returned outline; adjust the key if necessary (here we expect 'outline_text')
       const generatedOutline = res.data.outline_text || "";
       console.log("DEBUG: generatedOutline =>", generatedOutline);
-
+      
       setLoading(false);
-      // Navigate to GenerateLesson page, passing the newly generated outline
+      // Navigate to GenerateLesson page, passing the generated outline in state
       navigate("/generate-lesson", { state: { outline: generatedOutline } });
     } catch (error) {
       console.error("Error generating course outline:", error);
@@ -32,7 +34,7 @@ function GenerateCourse() {
     }
   };
 
-  // Fetch existing courses from the DB
+  // Fetch and display existing courses from the database
   useEffect(() => {
     async function fetchCourses() {
       try {
@@ -45,9 +47,9 @@ function GenerateCourse() {
     fetchCourses();
   }, []);
 
-  // Navigate to GenerateLesson page with the existing course's overview
+  // When a course is clicked, navigate to the GenerateLesson page with that course's outline (overview)
   const handleCourseClick = (course) => {
-    // The 'overview' field in the DB now contains the entire outline
+    // 'overview' should already be stored in the database as the full outline
     const outline = course.overview || "";
     navigate("/generate-lesson", { state: { outline } });
   };
@@ -67,7 +69,7 @@ function GenerateCourse() {
           />
         </div>
         <div>
-          <label>Number of Modules:</label><br />
+          <label>Number of Weeks:</label><br />
           <input
             type="number"
             value={numModules}
@@ -80,7 +82,7 @@ function GenerateCourse() {
           {loading ? "Generating..." : "Generate Outline"}
         </button>
       </form>
-
+      
       <hr style={{ margin: "40px 0" }} />
       <h3>Existing Courses</h3>
       {courses.length === 0 ? (
@@ -99,7 +101,7 @@ function GenerateCourse() {
               }}
               onClick={() => handleCourseClick(course)}
             >
-              <h4 style={{ color: "#e91e63", margin: "0 0 5px 0" }}>
+              <h4 style={{ color: "#e91e63", margin: "0" }}>
                 {course.course_name}
               </h4>
             </li>

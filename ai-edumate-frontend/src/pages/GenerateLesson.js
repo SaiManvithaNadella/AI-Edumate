@@ -1,18 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import api from '../api';
+import ReactMarkdown from 'react-markdown'; // For rendering markdown
 
-// A simple parser function to extract course title, modules, and lessons (unchanged)
+// A parser function to extract the course title, modules, and lessons.
+// This version flattens modules into a lessons array with module names.
+// If lesson_id is provided in a lesson string (for example, appended in a known format),
+// you could extend this parser to extract that; for now, it only parses module name and lessonName.
 function parseOutline(outline) {
   if (typeof outline !== "string") {
     console.log("DEBUG: Outline is not a string:", outline);
-    return { course_name: "", modules: [] };
+    return { course_name: "", lessons: [] };
   }
-
   const lines = outline.split("\n").map(line => line.trim()).filter(Boolean);
   let course_name = "";
-  const modules = [];
-  let currentModule = null;
+  const lessons = [];
+  let currentModule = "";
   
   lines.forEach(line => {
     if (line.toLowerCase().startsWith("course title:")) {
@@ -21,92 +24,88 @@ function parseOutline(outline) {
         course_name = parts.slice(1).join(":").trim();
       }
     } else if (line.toLowerCase().startsWith("module")) {
-      if (currentModule) {
-        modules.push(currentModule);
-      }
-      currentModule = { module_name: line, lessons: [] };
+      currentModule = line; // Save the module name
     } else if (line.toLowerCase().startsWith("- lesson:")) {
-      if (currentModule) {
-        const lessonName = line.replace(/^- lesson:/i, "").trim();
-        currentModule.lessons.push(lessonName);
-      }
+      const lessonName = line.replace(/^- lesson:/i, "").trim();
+      // For now, we don't have lesson_id from the outline parsing.
+      lessons.push({ module: currentModule, lessonName });
     }
   });
-  if (currentModule) {
-    modules.push(currentModule);
-  }
-  return { course_name, modules };
-}
-
-// A helper function to transform the AI-generated text into styled HTML
-function formatLessonContent(rawContent) {
-  if (typeof rawContent !== "string") {
-    return "<p>No content available.</p>";
-  }
-
-  const lines = rawContent.split("\n");
-  const htmlLines = lines.map((line) => {
-    const trimmed = line.trim();
-
-    // ### => <h3>
-    if (trimmed.startsWith("### ")) {
-      return `<h3>${trimmed.slice(4)}</h3>`;
-    }
-    // ## => <h2>
-    else if (trimmed.startsWith("## ")) {
-      return `<h2>${trimmed.slice(3)}</h2>`;
-    }
-    // - or * bullet => <li>
-    else if (trimmed.match(/^[-*]\s/)) {
-      return `<li>${trimmed.slice(2)}</li>`;
-    }
-    // Otherwise wrap in <p>
-    else {
-      return `<p>${trimmed}</p>`;
-    }
-  });
-
-  // If you detect <li> lines, you may want to wrap them in <ul> or <ol>:
-  const finalHtml = htmlLines.join("\n");
-  return finalHtml;
+  return { course_name, lessons };
 }
 
 function GenerateLesson() {
   const location = useLocation();
-  console.log("DEBUG: location.state =>", location.state); 
-  const { outline = "" } = location.state || {};
+  console.log("DEBUG: location.state =>", location.state);
+  // Expect the navigation state to provide at least the full outline.
+  const { outline = "", lessons: passedLessons, course_name: passedCourse } = location.state || {};
 
-  const [parsedData, setParsedData] = useState({ course_name: "", modules: [] });
-  const [selectedModule, setSelectedModule] = useState("");
-  const [selectedLesson, setSelectedLesson] = useState("");
-  const [lessonContent, setLessonContent] = useState("");
+  // If passedLessons are available (for example, from backend course generation), use them.
+  const [parsedData, setParsedData] = useState({ course_name: passedCourse || "", lessons: [] });
+  const [currentLessonIndex, setCurrentLessonIndex] = useState(0);
+  // Cache the generated content for lessons by index.
+  const [generatedLessons, setGeneratedLessons] = useState({});
   const [loading, setLoading] = useState(false);
 
+  // Parse the outline (or use passed lessons if available).
   useEffect(() => {
-    if (outline) {
+    if (passedLessons && passedLessons.length > 0) {
+      setParsedData({ course_name: passedCourse, lessons: passedLessons });
+      setCurrentLessonIndex(0);
+    } else if (outline) {
       const data = parseOutline(outline);
       console.log("DEBUG: Parsed data:", data);
       setParsedData(data);
-      // Default: if modules exist, select the first module and its first lesson
-      if (data.modules.length > 0) {
-        setSelectedModule(data.modules[0].module_name);
-        if (data.modules[0].lessons.length > 0) {
-          setSelectedLesson(data.modules[0].lessons[0]);
+      if (data.lessons.length > 0) {
+        setCurrentLessonIndex(0);
+      }
+    }
+  }, [outline, passedLessons, passedCourse]);
+
+  useEffect(() => {
+    async function fetchLessonContent() {
+      const lesson = parsedData.lessons[currentLessonIndex];
+      if (!parsedData.course_name || !lesson) return;
+      
+      // If the lesson object includes lesson_id, use that.
+      let params;
+      if (lesson.lesson_id) {
+        params = { lesson_id: lesson.lesson_id };
+      } else {
+        params = {
+          course_name: parsedData.course_name,
+          module_name: lesson.module,
+          lesson_name: lesson.lessonName,
+        };
+      }
+      
+      try {
+        const res = await api.get('/lesson-content', { params });
+        if (res.data && res.data.content && res.data.content.trim().length > 0) {
+          setGeneratedLessons(prev => ({
+            ...prev,
+            [currentLessonIndex]: res.data.content,
+          }));
+        } else {
+          setGeneratedLessons(prev => ({ ...prev, [currentLessonIndex]: "" }));
+        }
+      } catch (error) {
+        if (error.response && error.response.status === 404) {
+          // No content found; set empty string to show generate button
+          setGeneratedLessons(prev => ({ ...prev, [currentLessonIndex]: "" }));
+        } else {
+          console.error("Error fetching lesson content:", error);
         }
       }
     }
-  }, [outline]);
+    fetchLessonContent();
+  }, [parsedData, currentLessonIndex]);
 
-  // Retrieve lessons for the selected module
-  const getLessonsForModule = (moduleName) => {
-    const mod = parsedData.modules.find((m) => m.module_name === moduleName);
-    return mod ? mod.lessons : [];
-  };
-
-  // Generate the lesson content from the AI
+  // Handler to generate lesson content on demand.
   const handleGenerateContent = async () => {
-    if (!parsedData.course_name || !selectedModule || !selectedLesson) {
-      alert("Please select valid options.");
+    const lesson = parsedData.lessons[currentLessonIndex];
+    if (!parsedData.course_name || !lesson) {
+      alert("Invalid course or lesson selection.");
       return;
     }
     setLoading(true);
@@ -114,76 +113,89 @@ function GenerateLesson() {
       const res = await api.post('/lesson/generate', null, {
         params: {
           course_name: parsedData.course_name,
-          module_name: selectedModule,
-          lesson_name: selectedLesson,
+          module_name: lesson.module,
+          lesson_name: lesson.lessonName,
         },
       });
-      const rawContent = res.data.generated_content || "No content returned.";
-      setLessonContent(rawContent);
+      const content = res.data.generated_content || "No content returned.";
+      // Cache the generated content.
+      setGeneratedLessons(prev => ({
+        ...prev,
+        [currentLessonIndex]: content,
+      }));
       setLoading(false);
     } catch (error) {
       console.error("Error generating lesson content:", error);
-      setLessonContent("Error generating lesson content.");
       setLoading(false);
     }
   };
 
-  // Format the lesson content for display
-  const formattedLessonContent = formatLessonContent(lessonContent);
+  // Navigation handlers.
+  const handleNextLesson = () => {
+    if (currentLessonIndex < parsedData.lessons.length - 1) {
+      setCurrentLessonIndex(currentLessonIndex + 1);
+    }
+  };
+
+  const handlePrevLesson = () => {
+    if (currentLessonIndex > 0) {
+      setCurrentLessonIndex(currentLessonIndex - 1);
+    }
+  };
+
+  const currentLesson = parsedData.lessons[currentLessonIndex];
+  const currentContent = generatedLessons[currentLessonIndex];
+  
 
   return (
     <div>
-      <h2 style={{ color: "#e91e63" }}>Generate what you want to learn</h2>
+      <h2 style={{ color: "#e91e63", textAlign: "center" }}>Lesson Generation</h2>
       <div className="lesson-screen">
-        {/* Left Side: Display the generated course outline */}
+        {/* Left Side: Course Outline (display the full outline) */}
         <div className="lesson-outline">
           <h2>Course Outline</h2>
           <pre style={{ whiteSpace: "pre-wrap", color: "#ccc" }}>{outline}</pre>
         </div>
-        {/* Right Side: Lesson Content Generation */}
+        {/* Right Side: Lesson Content Area */}
         <div className="lesson-generator">
           <h2>Lesson Content</h2>
-          <div className="select-dropdown">
-            <label htmlFor="module-select">Select Module:</label><br />
-            <select
-              id="module-select"
-              value={selectedModule}
-              onChange={(e) => {
-                setSelectedModule(e.target.value);
-                // When module changes, reset lesson selection
-                const lessons = getLessonsForModule(e.target.value);
-                setSelectedLesson(lessons.length > 0 ? lessons[0] : "");
-              }}
-            >
-              {parsedData.modules.map((mod, index) => (
-                <option key={index} value={mod.module_name}>
-                  {mod.module_name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="select-dropdown">
-            <label htmlFor="lesson-select">Select Lesson:</label><br />
-            <select
-              id="lesson-select"
-              value={selectedLesson}
-              onChange={(e) => setSelectedLesson(e.target.value)}
-            >
-              {getLessonsForModule(selectedModule).map((les, idx) => (
-                <option key={idx} value={les}>
-                  {les}
-                </option>
-              ))}
-            </select>
-          </div>
-          <button onClick={handleGenerateContent} className="button">
-            {loading ? "Generating..." : "Generate Lesson Content"}
-          </button>
-          {lessonContent && (
-            <div className="lesson-content" 
-                 dangerouslySetInnerHTML={{ __html: formattedLessonContent }}>
-            </div>
+          {currentLesson ? (
+            <>
+              <p>
+                <strong>Module:</strong> {currentLesson.module}<br />
+                <strong>Lesson:</strong> {currentLesson.lessonName}
+              </p>
+              {currentContent && currentContent.trim().length > 0 ? (
+                <div className="lesson-content" style={{
+                  marginTop: "20px",
+                  padding: "5px",
+                  border: "1px solid #444",
+                  borderRadius: "4px",
+                  backgroundColor: "#222",
+                  color: "#ccc",
+                  whiteSpace: "pre-wrap"
+                }}>
+                  <ReactMarkdown>{currentContent}</ReactMarkdown>
+                </div>
+              ) : (
+                <div style={{ marginTop: "20px", textAlign: "center" }}>
+                  <button onClick={handleGenerateContent} className="button">
+                    {loading ? "Generating..." : "Generate Lesson Content"}
+                  </button>
+                </div>
+              )}
+            </>
+          ) : (
+            <p>No lessons found in the outline.</p>
           )}
+          <div style={{ marginTop: "20px", textAlign: "center" }}>
+            <button onClick={handlePrevLesson} disabled={currentLessonIndex === 0} className="button" style={{ marginRight: "10px" }}>
+              Previous Lesson
+            </button>
+            <button onClick={handleNextLesson} disabled={currentLessonIndex === parsedData.lessons.length - 1} className="button">
+              Next Lesson
+            </button>
+          </div>
         </div>
       </div>
     </div>
