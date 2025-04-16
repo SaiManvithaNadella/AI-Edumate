@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import api from '../api';
-import ReactMarkdown from 'react-markdown'; // For rendering markdown
+import ReactMarkdown from 'react-markdown';
+import katex from 'katex';
+import 'katex/dist/katex.min.css';
+import remarkMath from 'remark-math';
+import rehypeRaw from 'rehype-raw';
 
 // A parser function to extract the course title, modules, and lessons.
-// This version flattens modules into a lessons array with module names.
-// If lesson_id is provided in a lesson string (for example, appended in a known format),
-// you could extend this parser to extract that; for now, it only parses module name and lessonName.
 function parseOutline(outline) {
   if (typeof outline !== "string") {
     console.log("DEBUG: Outline is not a string:", outline);
@@ -33,6 +34,82 @@ function parseOutline(outline) {
   });
   return { course_name, lessons };
 }
+
+// Custom components for math rendering
+const MathRenderer = ({ children, inline = false }) => {
+  const mathRef = useRef(null);
+
+  useEffect(() => {
+    if (mathRef.current) {
+      const mathText = children.trim();
+      try {
+        katex.render(mathText, mathRef.current, {
+          displayMode: !inline,
+          throwOnError: false,
+          errorColor: '#f00',
+          trust: true
+        });
+      } catch (error) {
+        console.error('KaTeX rendering error:', error);
+        mathRef.current.textContent = inline 
+          ? `Error rendering math: ${mathText}` 
+          : `Error rendering math expression: ${mathText}`;
+      }
+    }
+  }, [children, inline]);
+
+  return <span ref={mathRef} className={inline ? "katex-inline" : "katex-display"} />;
+};
+
+// Process markdown content to handle math expressions
+const MathMarkdown = ({ content }) => {
+  // Pre-process content to handle math expressions in markdown
+  const [processedContent, setProcessedContent] = useState(content);
+  
+  useEffect(() => {
+    const preprocessMath = (text) => {
+      if (!text) return text;
+      
+      // Handle math in brackets format
+      let processed = text;
+      
+      // Handle various math formats, converting them to HTML with custom tags
+      // For block math expressions that might be in different formats
+      processed = processed.replace(/\\\[(.*?)\\\]/gs, '<math-block>$1</math-block>');
+      processed = processed.replace(/\$\$(.*?)\$\$/gs, '<math-block>$1</math-block>');
+      processed = processed.replace(/\[math\](.*?)\[\/math\]/gs, '<math-block>$1</math-block>');
+      
+      // For inline math expressions
+      processed = processed.replace(/\\\((.*?)\\\)/gs, '<math-inline>$1</math-inline>');
+      processed = processed.replace(/\$(.*?)\$/gs, '<math-inline>$1</math-inline>');
+      processed = processed.replace(/\[inline-math\](.*?)\[\/inline-math\]/gs, '<math-inline>$1</math-inline>');
+      
+      // Special case for the format shown in the example
+      processed = processed.replace(/\[ (.*?) \]/gs, '<math-block>$1</math-block>');
+      processed = processed.replace(/\( (.*?) \)/gs, '<math-inline>$1</math-inline>');
+      
+      return processed;
+    };
+    
+    setProcessedContent(preprocessMath(content));
+  }, [content]);
+
+  // Components for rendering custom elements in markdown
+  const components = {
+    'math-block': ({ children }) => <MathRenderer>{children}</MathRenderer>,
+    'math-inline': ({ children }) => <MathRenderer inline>{children}</MathRenderer>
+  };
+
+  return (
+    <ReactMarkdown 
+      remarkPlugins={[remarkMath]}
+      rehypePlugins={[rehypeRaw]}
+      components={components}
+    >
+      {processedContent}
+    </ReactMarkdown>
+  );
+};
 
 function GenerateLesson() {
   const location = useLocation();
@@ -146,7 +223,6 @@ function GenerateLesson() {
   const currentLesson = parsedData.lessons[currentLessonIndex];
   const currentContent = generatedLessons[currentLessonIndex];
   
-
   return (
     <div className="lesson-generation-container">
       <h2 className="lesson-generation-title">Lesson Generation</h2>
@@ -167,7 +243,7 @@ function GenerateLesson() {
               </p>
               {currentContent && currentContent.trim().length > 0 ? (
                 <div className="lesson-content">
-                  <ReactMarkdown>{currentContent}</ReactMarkdown>
+                  <MathMarkdown content={currentContent} />
                 </div>
               ) : (
                 <div className="generate-button-container">

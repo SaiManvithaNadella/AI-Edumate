@@ -690,6 +690,16 @@ canvas {
     height: 500px;
     margin-bottom: 20px;
   }
+
+  .katex-display {
+    font-size: 0.9em;
+    overflow-x: auto;
+  }
+  
+  .lesson-content .katex-display {
+    padding: 10px;
+    margin: 10px 0;
+  }
 }
 
 /* Flashcards styles - enhanced interactive version */
@@ -1104,4 +1114,80 @@ canvas {
   background-color: rgba(255, 77, 77, 0.1);
   border-radius: 4px;
   border: 1px solid rgba(255, 77, 77, 0.3);
+}
+
+/* CSS styles for math equation rendering */
+/* Add these to your existing index.css file */
+
+/* KaTeX base styles */
+.katex-display {
+  display: block;
+  margin: 1em 0;
+  text-align: center;
+}
+
+.katex {
+  font: normal 1.1em KaTeX_Main, Times New Roman, serif;
+  line-height: 1.2;
+  white-space: normal;
+  text-indent: 0;
+  color: #fff;
+}
+
+/* Style for math in lesson content */
+.lesson-content .katex-display {
+  padding: 15px;
+  margin: 15px 0;
+  background-color: rgba(233, 30, 99, 0.1);
+  border: 1px solid rgba(233, 30, 99, 0.3);
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+.lesson-content .katex-html {
+  padding: 5px 0;
+}
+
+/* Inline math styles */
+.lesson-content .katex-inline {
+  padding: 0 3px;
+  background-color: rgba(233, 30, 99, 0.05);
+  border-radius: 3px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* Dark theme adjustments - override KaTeX default colors */
+.katex .mathdefault,
+.katex .mathnormal,
+.katex .mathit,
+.katex .mathbf,
+.katex .boldsymbol {
+  color: #fff;
+}
+
+/* Special characters and operators */
+.katex .mbin {
+  color: #e91e63;
+}
+
+.katex .mrel {
+  color: #e91e63;
+}
+
+.katex .mord + .mrel,
+.katex .mrel + .mord,
+.katex .mord + .mbin,
+.katex .mbin + .mord {
+  margin-left: 0.15em;
+}
+
+/* Fraction styling */
+.katex .mfrac .frac-line {
+  border-bottom-color: #999;
+}
+
+/* Subscripts and superscripts */
+.katex .msupsub {
+  color: #ccc;
 }
