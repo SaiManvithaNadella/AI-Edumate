@@ -38,7 +38,7 @@ class Quiz(Base):
     quiz_id = Column(Integer, primary_key=True, index=True)
     lesson_id = Column(Integer, ForeignKey("lessons.lesson_id"))
     questions = Column(Text)
-
+    
 class ChatHistory(Base):
     __tablename__ = "chat_history"
     id = Column(Integer, primary_key=True, index=True)

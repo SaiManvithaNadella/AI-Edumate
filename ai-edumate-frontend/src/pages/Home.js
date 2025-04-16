@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api';
-import { Doughnut, Bar, Radar } from 'react-chartjs-2';
+import { Doughnut, Bar } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -60,16 +60,14 @@ function parseOutline(outline) {
   return { course_name, lessons };
 }
 
-// ProgressDashboard component renders five different visualizations.
 function ProgressDashboard({ progressData }) {
   // Define target values (adjust as needed)
   const targetCourses = 10;
   const targetLessons = 500;
-  const targetQuizPoints = 100;
 
   // Chart for Courses Created (Doughnut)
   const coursesData = {
-    labels: ['Courses Created', 'Remaining'],
+    labels: ['Courses Generated', 'Remaining Courses'],
     datasets: [
       {
         data: [
@@ -83,34 +81,19 @@ function ProgressDashboard({ progressData }) {
 
   // Chart for Lessons Studied (Bar)
   const lessonsData = {
-    labels: ['Lessons Studied'],
+    labels: ['Lessons Completed'],
     datasets: [
       {
-        label: 'Lessons',
+        label: 'Lessons in the Bag!',
         data: [progressData.lessonsStudied],
         backgroundColor: '#9c27b0',
       },
     ],
   };
 
-  // Chart for Quiz Points (Radar)
-  const quizPointsData = {
-    labels: ['Quiz Points', 'Remaining'],
-    datasets: [
-      {
-        label: 'Quiz Points',
-        data: [
-          progressData.quizPoints,
-          Math.max(targetQuizPoints - progressData.quizPoints, 0),
-        ],
-        backgroundColor: ['#03a9f4', '#555'],
-      },
-    ],
-  };
-
   // Chart for Lesson Content Generated (Doughnut)
   const lessonContentData = {
-    labels: ['Lesson Content Generated', 'Remaining'],
+    labels: ['Content Generated', 'Remaining Content'],
     datasets: [
       {
         data: [
@@ -124,10 +107,10 @@ function ProgressDashboard({ progressData }) {
 
   // Chart for Quizzes Taken (Bar)
   const quizCountData = {
-    labels: ['Quizzes Taken'],
+    labels: ['Quizzes Completed'],
     datasets: [
       {
-        label: 'Quizzes',
+        label: 'Quizzes Taken',
         data: [progressData.quizzesTaken],
         backgroundColor: '#4caf50',
       },
@@ -136,20 +119,30 @@ function ProgressDashboard({ progressData }) {
 
   const options = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
-      legend: { display: false },
-      title: { display: true, text: 'Progress Overview', color: '#e91e63', font: { size: 18 } },
+      legend: { 
+        display: true,
+        position: 'top',
+        labels: {
+          color: '#ccc',
+          font: {
+            size: 10
+          }
+        }
+      },
+      title: { display: false },
     },
     scales: {
-      x: { ticks: { color: '#ccc' } },
-      y: { beginAtZero: true, ticks: { color: '#ccc' } },
+      x: { ticks: { color: '#ccc', display: false } },
+      y: { beginAtZero: true, ticks: { color: '#ccc', display: false } },
     },
   };
 
   // Generate insight message based on progress data
   let insights = '';
   if (progressData.coursesCreated >= targetCourses && progressData.lessonsStudied >= targetLessons) {
-    insights = "Great job! You’re well on your way to mastering your courses.";
+    insights = "Great job! You're well on your way to mastering your courses.";
   } else {
     insights = "Keep up the progress—more courses, lesson content, and quizzes will boost your learning!";
   }
@@ -157,34 +150,29 @@ function ProgressDashboard({ progressData }) {
   return (
     <div className="progress-dashboard">
       <h2>Your Progress Dashboard</h2>
+      <p className="insights-text">{insights}</p>
       <div className="progress-charts">
-        {/* Courses Created */}
         <div className="progress-chart">
+          <p className="chart-title">Courses Generated!</p>
           <Doughnut data={coursesData} options={options} />
-          <p>Courses Generated!: {progressData.coursesCreated} / {targetCourses}</p>
+          <p className="chart-stats">{progressData.coursesCreated}/{targetCourses}</p>
         </div>
-        {/* Lessons Studied */}
         <div className="progress-chart">
+          <p className="chart-title">Lessons in the Bag!</p>
           <Bar data={lessonsData} options={options} />
-          <p>Lessons in the Bag!: {progressData.lessonsStudied} / {targetLessons}</p>
+          <p className="chart-stats">{progressData.lessonsStudied}/{targetLessons}</p>
         </div>
-        {/* Quiz Points */}
         <div className="progress-chart">
-          <Radar data={quizPointsData} options={options} />
-          <p>Quiz Points: {progressData.quizPoints} / {targetQuizPoints}</p>
-        </div>
-        {/* Lesson Content Generated */}
-        <div className="progress-chart">
+          <p className="chart-title">Lesson Content</p>
           <Doughnut data={lessonContentData} options={options} />
-          <p>Lesson Content: {progressData.lessonContentGenerated} / {targetLessons}</p>
+          <p className="chart-stats">{progressData.lessonContentGenerated}/{targetLessons}</p>
         </div>
-        {/* Quizzes Taken */}
         <div className="progress-chart">
+          <p className="chart-title">Quizzes Taken</p>
           <Bar data={quizCountData} options={options} />
-          <p>Quizzes Taken: {progressData.quizzesTaken}</p>
+          <p className="chart-stats">{progressData.quizzesTaken}</p>
         </div>
       </div>
-      <p>{insights}</p>
     </div>
   );
 }
@@ -202,13 +190,12 @@ function Home() {
     lessonsStudied: 0,
     lessonContentGenerated: 0,
     quizzesTaken: 0,
-    quizPoints: 0,
   });
 
   useEffect(() => {
     async function fetchProgress() {
       try {
-        // Fetch courses and compute coursesCreated and lessonsStudied.
+        // Fetch courses from /course/list
         const courseRes = await api.get('/course/list');
         const courses = courseRes.data;
         const coursesCreated = courses.length;
@@ -219,20 +206,16 @@ function Home() {
             totalLessons += lessons.length;
           }
         });
-        // Fetch lesson content count.
+        
+        // Fetch the count of records in the lesson_content table (if needed)
         const lessonContentRes = await api.get('/lesson-content/count');
         const lessonContentCount = lessonContentRes.data.count;
-        // Fetch quiz count.
-        const quizRes = await api.get('/quiz/count');
-        const quizCount = quizRes.data.count;
-        // Assume quizPoints is calculated as, for example, quizCount * 10.
-        const quizPoints = quizCount * 10;
+  
         setProgressData({
           coursesCreated,
           lessonsStudied: totalLessons,
           lessonContentGenerated: lessonContentCount,
-          quizzesTaken: quizCount,
-          quizPoints,
+          quizzesTaken: courses.length,
         });
       } catch (error) {
         console.error("Error fetching progress data:", error);
@@ -263,6 +246,13 @@ function Home() {
       setChatInput('');
       setConfidence('');
       setTopic('');
+      
+      // Ensure scrolling to bottom after new message
+      setTimeout(() => {
+        if (chatHistoryRef.current) {
+          chatHistoryRef.current.scrollTop = chatHistoryRef.current.scrollHeight;
+        }
+      }, 100);
     } catch (error) {
       console.error("Error in tutor chat:", error);
       alert("Error communicating with AI Tutor.");
@@ -276,61 +266,70 @@ function Home() {
   }, [chatHistory]);
 
   return (
-    <div className="home-description">
-      <h1>What is AI‑Edumate?</h1>
-      <p>
-        AI‑Edumate is an innovative platform that leverages AI to automate the creation of educational courses.
-        Generate comprehensive course outlines, detailed lesson content, interactive quizzes, and dynamic flashcards.
-      </p>
-      <Link to="/generate-course" className="button">
-        Let's Get Started!
-      </Link>
-      
-      {/* Progress Dashboard */}
-      <ProgressDashboard progressData={progressData} />
-      
-      <hr className="divider" />
-      <h2>AI Tutor Chatbot</h2>
-      <p>
-        Ask your question, share your confidence level, and mention the topic.
-        Your Personal Teacher will provide a clear, empathetic explanation to help you understand.
-      </p>
-      <div className="chat-input-section">
-        <input
-          type="text"
-          placeholder="Enter your question..."
-          value={chatInput}
-          onChange={(e) => setChatInput(e.target.value)}
-          className="chat-input"
-        />
-        <input
-          type="text"
-          placeholder="Your confidence (e.g., low, medium, high)"
-          value={confidence}
-          onChange={(e) => setConfidence(e.target.value)}
-          className="chat-input"
-        />
-        <input
-          type="text"
-          placeholder="Topic (optional)"
-          value={topic}
-          onChange={(e) => setTopic(e.target.value)}
-          className="chat-input"
-        />
-        <button onClick={handleAsk} className="chat-button">
-          Ask
-        </button>
+    <div className="home-container">
+      <div className="home-header">
+        <h1>AI-Edumate</h1>
+        <p>
+          AI‑Edumate leverages AI to automate the creation of educational courses.
+          Generate course outlines, lesson content, quizzes, and flashcards.
+        </p>
+        <Link to="/generate-course" className="button">
+          Let's Get Started!
+        </Link>
       </div>
-      <div className="chat-history" ref={chatHistoryRef}>
-        {chatHistory.length === 0 ? (
-          <p className="chat-placeholder">No chats yet. Ask your question to get started!</p>
-        ) : (
-          chatHistory.map((msg, index) => (
-            <div key={index} className={`chat-bubble ${msg.sender === "user" ? "user-bubble" : "tutor-bubble"}`}>
-              {msg.text}
+      
+      <div className="home-content">
+        <div className="dashboard-section">
+          <ProgressDashboard progressData={progressData} />
+        </div>
+        
+        <div className="chat-section">
+          <h2>AI Tutor Chatbot</h2>
+          <p className="chat-description">
+            Ask your question, share your confidence level, and mention the topic.
+          </p>
+          <div className="chat-controls">
+            <div className="chat-inputs">
+              <input
+                type="text"
+                placeholder="Enter your question..."
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                className="chat-input"
+              />
+              <div className="chat-secondary-inputs">
+                <input
+                  type="text"
+                  placeholder="Your Confidence level"
+                  value={confidence}
+                  onChange={(e) => setConfidence(e.target.value)}
+                  className="chat-input-small"
+                />
+                <input
+                  type="text"
+                  placeholder="Subject (optional)"
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  className="chat-input-small"
+                />
+                <button onClick={handleAsk} className="chat-button">
+                  Ask
+                </button>
+              </div>
             </div>
-          ))
-        )}
+            <div className="chat-history" ref={chatHistoryRef}>
+              {chatHistory.length === 0 ? (
+                <p className="chat-placeholder">No chats yet. Ask your question to get started!</p>
+              ) : (
+                chatHistory.map((msg, index) => (
+                  <div key={index} className={`chat-bubble ${msg.sender === "user" ? "user-bubble" : "tutor-bubble"}`}>
+                    {msg.text}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

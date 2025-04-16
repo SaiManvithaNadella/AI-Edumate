@@ -108,3 +108,12 @@ def get_quiz_count(db: Session = Depends(get_db)):
     """
     count = db.query(models.Quiz).count()
     return {"count": count}
+
+@router.post("/submit")
+def submit_quiz(quiz_id: int, points: int, db: Session = Depends(get_db)):
+    quiz = db.query(models.Quiz).filter(models.Quiz.quiz_id == quiz_id).first()
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz not found")
+    quiz.points = points  # Update quiz with the awarded points
+    db.commit()
+    return {"message": "Quiz points updated", "points": points}

@@ -148,13 +148,13 @@ function GenerateLesson() {
   
 
   return (
-    <div>
-      <h2 style={{ color: "#e91e63", textAlign: "center" }}>Lesson Generation</h2>
+    <div className="lesson-generation-container">
+      <h2 className="lesson-generation-title">Lesson Generation</h2>
       <div className="lesson-screen">
         {/* Left Side: Course Outline (display the full outline) */}
         <div className="lesson-outline">
           <h2>Course Outline</h2>
-          <pre style={{ whiteSpace: "pre-wrap", color: "#ccc" }}>{outline}</pre>
+          <pre className="outline-content">{outline}</pre>
         </div>
         {/* Right Side: Lesson Content Area */}
         <div className="lesson-generator">
@@ -166,19 +166,11 @@ function GenerateLesson() {
                 <strong>Lesson:</strong> {currentLesson.lessonName}
               </p>
               {currentContent && currentContent.trim().length > 0 ? (
-                <div className="lesson-content" style={{
-                  marginTop: "20px",
-                  padding: "5px",
-                  border: "1px solid #444",
-                  borderRadius: "4px",
-                  backgroundColor: "#222",
-                  color: "#ccc",
-                  whiteSpace: "pre-wrap"
-                }}>
+                <div className="lesson-content">
                   <ReactMarkdown>{currentContent}</ReactMarkdown>
                 </div>
               ) : (
-                <div style={{ marginTop: "20px", textAlign: "center" }}>
+                <div className="generate-button-container">
                   <button onClick={handleGenerateContent} className="button">
                     {loading ? "Generating..." : "Generate Lesson Content"}
                   </button>
@@ -188,8 +180,8 @@ function GenerateLesson() {
           ) : (
             <p>No lessons found in the outline.</p>
           )}
-          <div style={{ marginTop: "20px", textAlign: "center" }}>
-            <button onClick={handlePrevLesson} disabled={currentLessonIndex === 0} className="button" style={{ marginRight: "10px" }}>
+          <div className="lesson-navigation">
+            <button onClick={handlePrevLesson} disabled={currentLessonIndex === 0} className="button">
               Previous Lesson
             </button>
             <button onClick={handleNextLesson} disabled={currentLessonIndex === parsedData.lessons.length - 1} className="button">

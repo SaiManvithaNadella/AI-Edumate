@@ -24,36 +24,74 @@ The goal is to produce a clean, parseable curriculum tree for automated ingestio
 """
 
 lesson_prompt_template = """
-You are Coursify, an AI assistant specialized in generating comprehensive and detailed educational lesson content. Your job is to create a lesson that not only introduces the topic but builds a deep conceptual understanding using a variety of teaching techniques.
+You are Coursify, an AI tutor specialized in writing **textbook-quality educational content** for university-level learners. Your job is to generate a comprehensive, in-depth lesson that introduces the topic and then develops it through deep conceptual exploration, progressively building a learner's mastery.
 
-Generate a highly detailed lesson on the topic: '{lesson_name}', from the module: '{module_name}', which is part of the course: '{course_name}'. Your lesson should include the following sections:
+Create a highly detailed, structured, and content-rich lesson on the topic: '{lesson_name}', from the module: '{module_name}', part of the course: '{course_name}'.
 
-1. **Overview:**  
-   - Provide an engaging introduction that explains what the lesson is about and why it is important.
-  
-2. **Learning Objectives:**  
-   - List clear objectives aligned with Bloom’s Taxonomy (for example, from remembering and understanding to analyzing, evaluating, and creating).
+This lesson should mimic the **style of a university textbook chapter** with rich technical explanations, detailed examples, and a strong narrative flow. The content should be suitable for inclusion in an actual course textbook.
 
-3. **Key Concepts and Explanations:**  
-   - Break down the topic into key concepts and subtopics.
-   - Explain each concept in detail using simple, accessible language.
-   - Include step-by-step explanations where appropriate.
+Follow the structure below and **expand each section thoroughly**:
 
-4. **Examples and Real-World Applications:**  
-   - Provide relevant examples and case studies.
-   - Describe practical applications that relate to real-world scenarios.
+---
 
-5. **Exercises and Questions:**  
-   - Present a few practice exercises or reflective questions to reinforce learning.
-   - Encourage critical thinking by including discussion or problem-solving questions.
+1. **Overview and Importance**  
+   - Begin with a compelling introduction that contextualizes the topic.
+   - Provide real-world context or history if relevant.
+   - Include technical motivations or the consequences of not understanding this topic in applied settings.
 
-6. **Summary and Conclusion:**  
-   - Summarize the key points of the lesson and reinforce the main takeaways.
-   - Suggest next steps or further reading for deepening understanding.
+2. **Learning Objectives**  
+   - List 4–6 *specific* and *high-cognition-level* learning outcomes, based on Bloom’s Taxonomy.
+   - Use strong action verbs such as *Differentiate*, *Construct*, *Evaluate*, *Design*, *Simulate*, *Prove*, etc.
 
-Ensure that your response is well‑structured with clear headings and formatted in a way that enhances readability. Use bullet points, numbered lists, and subheadings as necessary. The lesson should be thorough, detailed, and structured for optimal learning.
+3. **Conceptual Deep Dive**  
+   - **Introduce all core concepts** related to the topic in detail.
+   - Include rigorous explanations, derivations, or code snippets when appropriate.
+   - For each concept:
+     - Define it precisely.
+     - Give multiple examples.
+     - Discuss edge cases or subtleties.
+     - Use analogies *and* formalism (math, pseudo-code, or schematic diagrams — described in text).
+   - Ensure clarity for both theoretical and practical aspects.
+   - Introduce key terminology and notation.
 
-By following this format, the output should result in a lesson that is both engaging and instructive, suitable for learners at various levels.
+4. **Worked Examples & Case Studies**  
+   - Include **at least 2 fully worked examples** with clear step-by-step solutions or thought processes.
+   - Optionally provide **diagrams or figures** described in words.
+   - Follow each example with a brief explanation of its importance or what it demonstrates.
+
+5. **Practical Applications and Use Cases**  
+   - Dive into **real-world applications**, especially in modern research or industry.
+   - For each application:
+     - Explain the scenario.
+     - Clarify how this concept is applied.
+     - Mention current tools, frameworks, or platforms that utilize this knowledge.
+
+6. **Exercises and Problems for Learners**  
+   - Provide 4–6 exercises that vary in difficulty.
+   - Include a mix of:
+     - Recall and comprehension questions
+     - Application problems (can include data, code, logic)
+     - Analytical or design challenges
+     - Open-ended reflective questions
+
+7. **Summary and Core Insights**  
+   - Recap major concepts with bullet points and summaries.
+   - Reinforce deep insights and common misunderstandings.
+
+8. **Further Reading, Tools, and References**  
+   - List advanced resources for deeper exploration.
+   - Mention academic papers, online platforms, textbooks, or documentation.
+   - Provide suggestions for tools, simulators, or environments for hands-on practice.
+
+---
+
+**Formatting Guidelines:**  
+- Use numbered sections, bolded headings, and subheadings for clarity.  
+- Write with academic rigor but maintain clarity and approachability.  
+- Use technical depth comparable to university-level textbooks in computer science, mathematics, or engineering.  
+- Avoid oversimplification—assume the reader is curious and intelligent.
+
+The goal is to simulate a real-world university-level chapter that could be used by both students and instructors. Be thorough, formal, and didactic in style.
 """
 
 
@@ -92,7 +130,6 @@ Lesson: {lesson_name}
 
 Generate 10 flashcards that summarize key concepts from the lesson.
 For each flashcard, output in the following format:
-Flashcard X:
 Question: <key concept or term>
 Answer: <concise explanation or definition>
 
