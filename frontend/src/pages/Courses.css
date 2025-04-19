@@ -1,0 +1,91 @@
+/* src/pages/Courses.css */
+.courses-page {
+    padding: 1rem 0;
+  }
+  
+  .filters-bar {
+    background-color: var(--background-white);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .courses-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+  
+  .course-card {
+    background-color: var(--background-white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    text-decoration: none;
+    color: var(--text-primary);
+  }
+  
+  .course-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-md);
+  }
+  
+  .course-header {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  
+  .course-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+  }
+  
+  .difficulty-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+  
+  .difficulty-badge.beginner {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+  }
+  
+  .difficulty-badge.intermediate {
+    background-color: #fff3e0;
+    color: #e65100;
+  }
+  
+  .difficulty-badge.advanced {
+    background-color: #ffebee;
+    color: #c62828;
+  }
+  
+  .course-meta {
+    padding: 1rem;
+  }
+  
+  .course-meta p {
+    margin: 0.5rem 0;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .course-footer {
+    padding: 1rem;
+    border-top: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+  }

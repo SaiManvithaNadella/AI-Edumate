@@ -1,0 +1,198 @@
+/* src/pages/CourseDetail.css */
+.course-detail-page {
+    padding: 1rem 0;
+  }
+  
+  .course-header {
+    background-color: var(--background-white);
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 1.5rem;
+  }
+  
+  .course-header h1 {
+    margin-bottom: 1rem;
+  }
+  
+  .course-meta {
+    display: flex;
+    gap: 1.5rem;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+  }
+  
+  .course-meta span {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .course-progress {
+    background-color: var(--background-white);
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .progress-bar {
+    flex: 1;
+    height: 10px;
+    background-color: var(--background-light);
+    border-radius: 5px;
+    overflow: hidden;
+  }
+  
+  .progress {
+    height: 100%;
+    background-color: var(--primary-color);
+    transition: width 0.3s ease;
+  }
+  
+  .course-content {
+    display: flex;
+    gap: 1.5rem;
+  }
+  
+  .course-sidebar {
+    width: 300px;
+    background-color: var(--background-white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-sm);
+    padding: 1.5rem;
+    height: fit-content;
+  }
+  
+  .course-sidebar h3 {
+    margin-bottom: 1rem;
+    font-size: 1.25rem;
+  }
+  
+  .module {
+    margin-bottom: 1.5rem;
+  }
+  
+  .module h4 {
+    margin-bottom: 0.5rem;
+    color: var(--primary-color);
+  }
+  
+  .lessons {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .lesson {
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background-color 0.3s ease;
+  }
+  
+  .lesson:hover {
+    background-color: var(--background-light);
+  }
+  
+  .lesson.active {
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
+  }
+  
+  .lesson.completed {
+    color: var(--success-color);
+  }
+  
+  .lesson .fa-check-circle {
+    color: var(--success-color);
+  }
+  
+  .course-main {
+    flex: 1;
+    background-color: var(--background-white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-sm);
+    padding: 1.5rem;
+  }
+  
+  .lesson-content h2 {
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+  
+  .lesson-body {
+    margin-bottom: 2rem;
+  }
+  
+  .interactive-elements {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background-color: var(--background-light);
+    border-radius: var(--border-radius);
+  }
+  
+  .interactive-elements h3 {
+    margin-bottom: 1rem;
+  }
+  
+  .check-knowledge-btn,
+  .submit-check-btn {
+    padding: 0.75rem 1.5rem;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .check-knowledge-btn:hover,
+  .submit-check-btn:hover {
+    background-color: var(--primary-dark);
+  }
+  
+  .knowledge-check {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background-color: var(--background-light);
+    border-radius: var(--border-radius);
+  }
+  
+  .knowledge-check h3 {
+    margin-bottom: 1rem;
+  }
+  
+  .check-question {
+    margin-bottom: 1.5rem;
+  }
+  
+  .check-question p {
+    margin-bottom: 0.75rem;
+    font-weight: 500;
+  }
+  
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .options label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+  }
+  
+  .welcome-content {
+    text-align: center;
+    padding: 3rem;
+  }

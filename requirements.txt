@@ -1,9 +1,0 @@
-fastapi
-uvicorn
-sqlalchemy
-pydantic
-openai
-python-dotenv
-langchain
-faiss-cpu
-PyMuPDF

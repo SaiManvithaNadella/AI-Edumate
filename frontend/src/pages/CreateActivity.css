@@ -1,0 +1,120 @@
+/* src/pages/CreateActivity.css */
+.create-activity {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 1.5rem;
+    background-color: var(--background-white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .create-activity h2 {
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+  
+  .error-message {
+    background-color: var(--error-color);
+    color: white;
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    margin-bottom: 1.5rem;
+  }
+  
+  .materials-section {
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+    padding: 1.5rem;
+    background-color: var(--background-light);
+    border-radius: var(--border-radius);
+  }
+  
+  .materials-section h3 {
+    margin-bottom: 1rem;
+    font-size: 1.25rem;
+  }
+  
+  .material-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .material-row input {
+    flex: 1;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+  }
+  
+  .remove-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    background-color: var(--background-white);
+    color: var(--error-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  .remove-btn:hover {
+    background-color: var(--error-color);
+    color: var(--text-light);
+  }
+  
+  .remove-btn:disabled {
+    background-color: var(--background-light);
+    color: var(--text-secondary);
+    cursor: not-allowed;
+  }
+  
+  .add-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0.5rem;
+    padding: 0.5rem 1rem;
+    background-color: var(--background-white);
+    color: var(--primary-color);
+    border: 1px dashed var(--primary-color);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  .add-btn i {
+    margin-right: 0.5rem;
+  }
+  
+  .add-btn:hover {
+    background-color: var(--primary-light);
+  }
+  
+  .activity-preview {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background-color: var(--background-light);
+    border-radius: var(--border-radius);
+  }
+  
+  .activity-preview h3 {
+    margin-bottom: 1rem;
+    font-size: 1.25rem;
+  }
+  
+  /* Override common styles for create page */
+  .create-activity .form-group textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-family: inherit;
+    font-size: 1rem;
+    line-height: 1.5;
+    resize: vertical;
+  }

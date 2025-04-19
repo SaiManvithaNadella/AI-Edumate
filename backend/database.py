@@ -1,12 +1,19 @@
+# database.py
 from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from backend.models import Base
 import os
 
+# Database configuration
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./ai_edumate.db")
 
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
-SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+# Create SQLAlchemy engine
+engine = create_engine(
+    DATABASE_URL, connect_args={"check_same_thread": False}  # Only needed for SQLite
+)
 
-def init_db():
-    Base.metadata.create_all(bind=engine)
+# Create session factory
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# Create base class for models
+Base = declarative_base()

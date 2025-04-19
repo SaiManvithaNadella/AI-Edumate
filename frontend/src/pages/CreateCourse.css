@@ -1,0 +1,37 @@
+/* src/pages/CreateCourse.css */
+.create-course {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 1.5rem;
+    background-color: var(--background-white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .create-course h2 {
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+  
+  .form-info {
+    background-color: var(--background-light);
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    margin: 2rem 0;
+  }
+  
+  .form-info h3 {
+    margin-bottom: 1rem;
+    font-size: 1.25rem;
+  }
+  
+  .form-info ul {
+    margin: 0;
+    padding-left: 1.5rem;
+  }
+  
+  .form-info li {
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+  }
