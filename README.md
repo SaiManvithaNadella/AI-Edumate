@@ -99,17 +99,12 @@ Start the development server:
 ### API Documentation
 - The API documentation is available through Swagger UI at /docs when running the backend server.
 
-### Contributing
-- We welcome contributions! Please see our Contributing Guidelines for details.
-
-### License
-- This project is licensed under the MIT License - see the LICENSE file for details.
-
 ### Support
-- For support, please email support@aiedumate.com or open an issue in the GitHub repository.
+- For support, please email ft44056@umbc.edu or open an issue in the GitHub repository.
 
 ### Acknowledgments
 
 - OpenAI for providing AI capabilities
 - The education community for feedback and suggestions
+- UMBC Alex Brown Center for Entrepreneurship and Innovation for PNC Scholards Fund to work on this product.
 - All contributors who have helped shape this platform
