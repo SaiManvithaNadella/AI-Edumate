@@ -180,12 +180,12 @@ const CreateLessonPlan = () => {
           </div>
           
           <div className="form-group">
-            <label htmlFor="duration">Duration</label>
+            <label htmlFor="duration">No. of hours</label>
             <input
               type="text"
               id="duration"
               name="duration"
-              placeholder="e.g., 45 minutes, 1 hour"
+              placeholder="e.g., 3 hours"
               value={formData.duration}
               onChange={handleChange}
               required
@@ -282,22 +282,21 @@ const CreateLessonPlan = () => {
           <div className="content-editor-container">
             <h3>Lesson Plan Content</h3>
             {formData.useAI && generatedContent ? (
-              <div className="ai-generated-content">
-                <textarea
-                  id="content-editor"
-                  defaultValue={generatedContent}
-                  rows="20"
-                  readOnly={false}
-                ></textarea>
-              </div>
-            ) : (
-              <textarea
-                id="content-editor"
-                rows="20"
-                placeholder="Enter your lesson plan content here or use AI to generate it..."
-                disabled={formData.useAI && isLoading}
-              ></textarea>
-            )}
+  <div className="ai-generated-content">
+    <div 
+      id="content-editor" 
+      className="content-preview" 
+      dangerouslySetInnerHTML={{ __html: generatedContent.replace(/\n/g, '<br/>') }}
+    />
+  </div>
+) : (
+  <textarea
+    id="content-editor"
+    rows="20"
+    placeholder="Enter your lesson plan content here or use AI to generate it..."
+    disabled={formData.useAI && isLoading}
+  ></textarea>
+)}
           </div>
         </div>
         

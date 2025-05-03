@@ -184,7 +184,7 @@ const Register = () => {
           </div>
           
           <div className="form-group">
-            <label>Subjects You Teach (Optional)</label>
+            <label>Subjects You Want to Learn/Teach</label>
             <div className="subjects-checkboxes">
               <label className="checkbox-label">
                 <input

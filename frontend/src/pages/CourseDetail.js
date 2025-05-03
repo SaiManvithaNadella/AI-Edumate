@@ -10,7 +10,8 @@ const CourseDetail = () => {
   const [course, setCourse] = useState(null);
   const [progress, setProgress] = useState({
     completed_modules: [],
-    current_module: 0
+    current_module: 0,
+    progress_percentage: 0
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -18,22 +19,33 @@ const CourseDetail = () => {
   const [selectedLesson, setSelectedLesson] = useState(null);
   const [showKnowledgeCheck, setShowKnowledgeCheck] = useState(false);
   const [checkAnswers, setCheckAnswers] = useState({});
+  const [activeAccordion, setActiveAccordion] = useState([]);
 
   const fetchCourse = useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await api.get(`/courses/${id}`);
-      setCourse(response.data);
+      let courseData = response.data;
       
       // Parse JSON content if it's a string
-      if (typeof response.data.content === 'string') {
-        setCourse({
-          ...response.data,
-          content: JSON.parse(response.data.content)
-        });
+      if (typeof courseData.content === 'string') {
+        courseData = {
+          ...courseData,
+          content: JSON.parse(courseData.content)
+        };
       }
       
+      setCourse(courseData);
       setIsLoading(false);
+      
+      // Set first module and lesson as selected by default
+      if (courseData.content && courseData.content.modules && courseData.content.modules.length > 0) {
+        setSelectedModule(0);
+        setSelectedLesson(0);
+        
+        // Initialize all module accordions as open
+        setActiveAccordion(courseData.content.modules.map((_, index) => index));
+      }
     } catch (error) {
       console.error('Error fetching course:', error);
       setError('Failed to load course');
@@ -44,9 +56,19 @@ const CourseDetail = () => {
   const fetchProgress = useCallback(async () => {
     try {
       const response = await api.get(`/courses/${id}/progress`);
-      setProgress(response.data);
+      setProgress(response.data || {
+        completed_modules: [],
+        current_module: 0,
+        progress_percentage: 0
+      });
     } catch (error) {
       console.error('Error fetching progress:', error);
+      // Initialize with empty progress if fetch fails
+      setProgress({
+        completed_modules: [],
+        current_module: 0,
+        progress_percentage: 0
+      });
     }
   }, [id]);
 
@@ -57,13 +79,24 @@ const CourseDetail = () => {
 
   const updateProgress = async (moduleIndex, lessonIndex, completed) => {
     try {
+      // Calculate total lessons for percentage
+      const totalLessons = course?.content?.modules?.reduce(
+        (acc, module) => acc + module.lessons.length, 0
+      ) || 0;
+      
+      // Build completed_modules array
+      let completedModules = [...progress.completed_modules];
+      if (completed && !completedModules.includes(`${moduleIndex}-${lessonIndex}`)) {
+        completedModules.push(`${moduleIndex}-${lessonIndex}`);
+      }
+      
+      // Calculate percentage
+      const progressPercentage = (completedModules.length / totalLessons) * 100;
+      
       const newProgress = {
-        ...progress,
-        completed_modules: completed 
-          ? [...progress.completed_modules, `${moduleIndex}-${lessonIndex}`]
-          : progress.completed_modules,
+        completed_modules: completedModules,
         current_module: moduleIndex,
-        progress_percentage: calculateProgress(moduleIndex, lessonIndex, completed)
+        progress_percentage: progressPercentage
       };
       
       await api.post(`/courses/${id}/progress`, newProgress);
@@ -71,15 +104,6 @@ const CourseDetail = () => {
     } catch (error) {
       console.error('Error updating progress:', error);
     }
-  };
-
-  const calculateProgress = (moduleIndex, lessonIndex, completed) => {
-    const totalLessons = course?.content?.modules?.reduce(
-      (acc, module) => acc + module.lessons.length, 0
-    ) || 0;
-    
-    const completedLessons = progress.completed_modules.length + (completed ? 1 : 0);
-    return (completedLessons / totalLessons) * 100;
   };
 
   const startLesson = (moduleIndex, lessonIndex) => {
@@ -112,6 +136,14 @@ const CourseDetail = () => {
       // Course completed
       alert('Congratulations! You have completed the course!');
       navigate('/courses');
+    }
+  };
+
+  const toggleAccordion = (moduleIndex) => {
+    if (activeAccordion.includes(moduleIndex)) {
+      setActiveAccordion(activeAccordion.filter(index => index !== moduleIndex));
+    } else {
+      setActiveAccordion([...activeAccordion, moduleIndex]);
     }
   };
 
@@ -154,27 +186,37 @@ const CourseDetail = () => {
           <h3>Course Modules</h3>
           {course.content.modules.map((module, moduleIndex) => (
             <div key={moduleIndex} className="module">
-              <h4>{module.title}</h4>
-              <ul className="lessons">
-                {module.lessons.map((lesson, lessonIndex) => {
-                  const isCompleted = progress.completed_modules.includes(
-                    `${moduleIndex}-${lessonIndex}`
-                  );
-                  const isActive = selectedModule === moduleIndex && 
-                                 selectedLesson === lessonIndex;
-                  
-                  return (
-                    <li 
-                      key={lessonIndex}
-                      className={`lesson ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}`}
-                      onClick={() => startLesson(moduleIndex, lessonIndex)}
-                    >
-                      {isCompleted && <i className="fas fa-check-circle"></i>}
-                      {lesson.title}
-                    </li>
-                  );
-                })}
-              </ul>
+              <h4 
+                onClick={() => toggleAccordion(moduleIndex)}
+                className={selectedModule === moduleIndex ? "active-module" : ""}
+              >
+                <span className="module-title">{module.title}</span>
+                <span className="accordion-icon">
+                  {activeAccordion.includes(moduleIndex) ? '−' : '+'}
+                </span>
+              </h4>
+              {activeAccordion.includes(moduleIndex) && (
+                <ul className="lessons">
+                  {module.lessons.map((lesson, lessonIndex) => {
+                    const isCompleted = progress.completed_modules.includes(
+                      `${moduleIndex}-${lessonIndex}`
+                    );
+                    const isActive = selectedModule === moduleIndex && 
+                                  selectedLesson === lessonIndex;
+                    
+                    return (
+                      <li 
+                        key={lessonIndex}
+                        className={`lesson ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}`}
+                        onClick={() => startLesson(moduleIndex, lessonIndex)}
+                      >
+                        {isCompleted && <i className="fas fa-check-circle"></i>}
+                        {lesson.title}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </div>
           ))}
         </div>

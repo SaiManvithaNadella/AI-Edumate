@@ -22,6 +22,8 @@ import CourseDetail from './pages/CourseDetail';
 import Quiz from './pages/Quiz';
 import Flashcards from './pages/Flashcards';
 import AiTutor from './pages/AiTutor';
+import LessonPlanDetail from './pages/LessonPlanDetail';
+import AssessmentDetail from './pages/AssessmentDetail';
 import './App.css';
 
 // Protected route component
@@ -60,8 +62,10 @@ function App() {
                           <Route path="/" element={<Dashboard />} />
                           <Route path="/lesson-plans" element={<LessonPlans />} />
                           <Route path="/lesson-plans/create" element={<CreateLessonPlan />} />
+                          <Route path="/lesson-plans/:id" element={<LessonPlanDetail />} />
                           <Route path="/assessments" element={<Assessments />} />
                           <Route path="/assessments/create" element={<CreateAssessment />} />
+                          <Route path="/assessments/:id" element={<AssessmentDetail />} />
                           <Route path="/activities" element={<Activities />} />
                           <Route path="/activities/create" element={<CreateActivity />} />
                           <Route path="/resources" element={<Resources />} />

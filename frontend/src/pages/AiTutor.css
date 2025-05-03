@@ -108,7 +108,7 @@
   }
   
   .message-text {
-    background-color: rgb(255, 255, 255);
+    background-color: rgb(0, 0, 0);
     padding: 0.75rem 1rem;
     border-radius: 1rem;
     box-shadow: var(--shadow-sm);
@@ -205,3 +205,29 @@
   .message-input-form button:hover:not(:disabled) {
     background-color: var(--primary-dark);
   }
+
+  /* Sentiment Display */
+.sentiment-indicator {
+  margin: 0 1rem 1rem 1rem;
+  background-color: var(--background-light);
+  border-left: 4px solid var(--primary-color);
+  padding: 0.75rem 1rem;
+  border-radius: var(--border-radius);
+  font-weight: 500;
+  color: var(--primary-dark);
+  font-size: 0.9rem;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Reflection Prompt Box */
+.reflection-box {
+  margin: 0 1rem 1rem 1rem;
+  background-color: #fffbe6;
+  border-left: 4px solid #ffc107;
+  padding: 0.75rem 1rem;
+  border-radius: var(--border-radius);
+  font-style: italic;
+  font-size: 0.9rem;
+  color: #856404;
+  box-shadow: var(--shadow-sm);
+}

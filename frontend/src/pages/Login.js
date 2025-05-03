@@ -43,7 +43,7 @@ const Login = () => {
       <div className="auth-card">
         <div className="auth-header">
           <h2>AI-Edumate</h2>
-          <p>Log in to your teacher account</p>
+          <p>Log in to your portal</p>
         </div>
         
         {error && <div className="auth-error">{error}</div>}

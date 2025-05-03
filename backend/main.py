@@ -1,4 +1,5 @@
 # main.py
+import re
 from fastapi import FastAPI, Depends, HTTPException, status, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -17,11 +18,15 @@ from dotenv import load_dotenv
 import openai
 import json
 import traceback
+from transformers import pipeline
+from textblob import TextBlob
 
 load_dotenv()
 
 # Set up OpenAI API client
 openai.api_key = os.getenv("OPENAI_API_KEY")  # Set in environment variables for security
+
+emotion_classifier = pipeline("text-classification", model="bhadresh-savani/distilbert-base-uncased-emotion")
 
 # Initialize database
 Base.metadata.create_all(bind=engine)
@@ -59,6 +64,7 @@ def get_db():
         yield db
     finally:
         db.close()
+
 
 # ----- Pydantic Models -----
 
@@ -388,6 +394,22 @@ def get_assessments(
     ).offset(skip).limit(limit).all()
     return assessments
 
+@app.get("/assessments/{assessment_id}", response_model=Assessment)
+def get_assessment(
+    assessment_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    assessment = db.query(models.Assessment).filter(
+        models.Assessment.id == assessment_id,
+        models.Assessment.user_id == current_user.id
+    ).first()
+    
+    if not assessment:
+        raise HTTPException(status_code=404, detail="Assessment not found")
+    
+    return assessment
+
 @app.post("/ai/generate")
 async def generate_with_ai(
     request: AIRequest,
@@ -396,170 +418,145 @@ async def generate_with_ai(
     # Map the tool type to specific prompts and processing
     try:
         if request.tool_type == "lesson_plan":
-            system_message = """You are an expert educational consultant with extensive experience in curriculum development and instructional design. You specialize in creating comprehensive, standards-aligned lesson plans that incorporate differentiated instruction, formative assessments, and research-based teaching strategies. Your lesson plans are detailed enough for any teacher to implement while being flexible enough to adapt to diverse learning needs."""
+            system_message = """You are a world-class educational consultant with deep expertise in curriculum design, neurodiversity inclusion, differentiated instruction, and research-based pedagogy. Your mission is to create hour-by-hour lesson plans that maximize learning for ALL students, regardless of background, ability, or learning profile. Your designs are detailed enough for any substitute teacher to deliver flawlessly, yet sophisticated enough for master teachers to expand upon."""
             
             user_message = f"""
-    Create an exceptionally detailed, week-by-week lesson plan with comprehensive daily breakdowns and instructional materials for:
+   Create an exceptionally detailed **hour-by-hour instructional plan** for:
 
-    Subject: {request.parameters.get('subject')}
-    Grade Level: {request.parameters.get('grade_level')}
-    Topic: {request.parameters.get('topic')}
-    Duration: {request.parameters.get('duration')} weeks
+- **Subject**: {request.parameters.get('subject')}
+- **Grade Level**: {request.parameters.get('grade_level')}
+- **Topic**: {request.parameters.get('topic')}
+- **Total Duration**: {request.parameters.get('duration')} hours
 
-    UNIT FRAMEWORK AND FOUNDATIONAL ELEMENTS:
-    1. Provide a comprehensive unit overview including:
-       - Big Ideas and Enduring Understandings
-       - Backwards Design approach showing desired results, assessment evidence, and learning plan
-       - Concept map showing relationships between topics across weeks
-       - Vertical alignment (how this unit builds on prior learning and prepares for future learning)
+The plan must be **comprehensive, actionable, and inclusive**. Address the following requirements:
 
-    2. Pre-Assessment and Background Knowledge:
-       - Diagnostic assessment to determine students' prior knowledge and misconceptions
-       - Differentiation strategies based on pre-assessment results
-       - Cultural connections to leverage students' backgrounds and experiences
+---
 
-    FOR EACH WEEK, PROVIDE:
-    
-    1. Detailed Learning Objectives Framework:
-       - Content Standards (with specific standard numbers and full descriptions)
-       - 21st Century Skills Integration
-       - Bloom's Taxonomy Level for each objective
-       - Webb's Depth of Knowledge level
-       - Language Objectives (for ELL support)
-       - Social-Emotional Learning Objectives
+## 1. Unit Overview:
+- **Big Ideas and Enduring Understandings**
+- **Essential Questions**
+- **Learning Outcomes/Goals**
+- **Prior Knowledge Needed**
+- **Pre-Assessment Tools** (with sample questions)
+- **Vertical Alignment** (how prior and future learning connect)
+- **Concept Map** of the flow of topics hour-by-hour
 
-    2. Comprehensive Materials List:
-       - Physical materials with exact specifications
-       - Digital resources with specific URLs and usage instructions
-       - Printable materials attached with page counts and copy requirements
-       - Alternative materials for resource-limited environments
-       - Accessibility aids (screen readers, assistive technology considerations)
-       - Material preparation timeline and teacher prep instructions
+---
 
-    3. Daily Minute-by-Minute Lesson Plans:
-       Provide a detailed breakdown for each day, including:
-       
-       a. Pre-Class Setup (10 minutes before):
-          - Physical environment arrangement
-          - Technology preparation and troubleshooting
-          - Material distribution plans
-          - Grouping arrangements
+## 2. Master List of Topics:
+- List ALL major subtopics and concepts to be taught.
+- For each topic, specify:
+  - Key Knowledge (facts, theories)
+  - Key Skills (what students should be able to do)
+  - Academic Language/Vocabulary terms to master
 
-       b. Morning Meeting/Bell Work (8-12 minutes):
-          - Student entry procedures
-          - Engagement activity with clear instructions and expected outputs
-          - Visual display of daily learning targets and agenda
-          - Social-emotional check-in strategies
-          - Connection to real-world applications
+---
 
-       c. Knowledge Activation/Review (10-15 minutes):
-          - Multiple ways to activate prior knowledge
-          - Interactive review activities (think-pair-share, Kahoot, etc.)
-          - Misconception identification and addressing strategies
-          - Graphic organizers for knowledge mapping
+## 3. Teaching Methodologies and Techniques:
+For the entire unit, specify:
+- Direct Instruction techniques
+- Inquiry-based learning opportunities
+- Cooperative learning structures
+- Technology integration methods
+- Universal Design for Learning (UDL) principles
+- Culturally Responsive Teaching strategies
+- Specific neurodivergent-friendly approaches (for ADHD, Autism Spectrum, Dyslexia, Dysgraphia)
 
-       d. Direct Instruction with Modeling (18-25 minutes):
-          - Step-by-step teacher script with key questions
-          - Multiple representation formats (visual, auditory, kinesthetic)
-          - Check for understanding questions embedded every 5-7 minutes
-          - Error analysis examples with correction strategies
-          - Technology integration opportunities
-          - Note-taking scaffolds for students
+---
 
-       e. Guided Practice with Gradual Release (25-30 minutes):
-          - Detailed cooperative learning structures (roles, rotations, accountability)
-          - Differentiated practice activities (3-5 levels)
-          - Teacher monitoring checklist
-          - Common mistake anticipation guide
-          - Real-time assessment strategies
-          - Extension activities for early finishers
+## 4. Hour-by-Hour Lesson Plans:
+For EACH HOUR, provide:
 
-       f. Independent Practice/Application (20-25 minutes):
-          - Choice boards with varying difficulty levels
-          - Project-based learning opportunities
-          - Digital and analog options
-          - Self-assessment rubrics for students
-          - Creativity and innovation integration
+- **Learning Objectives**
+  - Standard codes (if applicable)
+  - Bloom’s Taxonomy and Webb’s DOK level
+  - Language objectives (for ELLs)
+  - Social-Emotional Learning (SEL) objectives
+- **Materials Needed** (physical, digital, printable)
+- **Minute-by-Minute Schedule**:
+  - Pre-Class Setup (5 minutes)
+  - Engagement/Bell Work (5 minutes)
+  - Prior Knowledge Activation (10 minutes)
+  - Direct Instruction (20 minutes)
+  - Guided Practice (10 minutes)
+  - Independent Practice (10 minutes)
+  - Formative Assessment (5 minutes)
+  - Closure/Reflection (5 minutes)
 
-       g. Comprehensive Formative Assessment:
-          - Multiple assessment methods (written, verbal, performance-based)
-          - Digital assessment tools (Quizizz, Padlet, etc.)
-          - Observation protocols
-          - Student conferencing questions
-          - Data collection templates
-          - Immediate intervention strategies based on assessment results
+---
 
-       h. Powerful Closure (10-12 minutes):
-          - Student-led summary strategies
-          - Connection to next lesson
-          - Reflection protocols (3-2-1, exit tickets, etc.)
-          - Homework preview and purpose explanation
-          - Clean-up procedures and time management
+## 5. Detailed Differentiation and Neurodivergent Strategies:
+For each HOUR, provide:
 
-    4. Research-Based Differentiation Matrix:
-       For each activity, provide specific modifications for:
-       - Below-grade level learners (scaffolds, modified tasks, visual supports)
-       - At-grade level learners (on-level challenges)
-       - Above-grade level learners (extensions, leadership roles)
-       - English Language Learners (WIDA levels 1-5 supports)
-       - Special Education (IEP/504 accommodations catalog)
-       - Gifted learners (depth and complexity strategies)
-       - Students with attention difficulties (movement breaks, fidgets)
-       - Students with processing speed issues (extended time, chunking)
+### a) Activities for:
+- **All students**
+- **Below-grade level students**
+- **On-grade level students**
+- **Above-grade level students**
+- **English Language Learners** (differentiate by WIDA level if possible)
+- **Special Education students** (consider IEP/504 accommodations)
+- **Gifted and Talented students**
+- **Neurodivergent students**:
+  - **ADHD**: Focus breaks, movement integration
+  - **Autism Spectrum Disorder**: Visual schedules, clear routines, sensory supports
+  - **Dyslexia**: Text-to-speech options, visual organizers
+  - **Dysgraphia**: Alternative assignments (oral responses, typing)
 
-    5. Multi-Faceted Assessment System:
-       - Pre-assessment instruments and analysis guides
-       - Formative assessment techniques (hourly, daily, weekly)
-       - Performance tasks with detailed rubrics
-       - Self and peer assessment protocols
-       - Portfolio components
-       - Data analysis protocols for adjustment
-       - Reteaching decision flowchart
+### b) For Each Learner Group, Specify:
+- Recommended instructional strategies
+- Suggested activities
+- Scaffolds and supports
+- Specific accommodations and modifications
 
-    6. Comprehensive Home-School Partnership:
-       - Daily communication templates (emails, apps)
-       - Weekly newsletter content
-       - Parent resource guides in multiple languages
-       - Home extension activities aligned to standards
-       - Family engagement events and projects
-       - Technology support resources for families
+---
 
-    7. Deep Integration Opportunities:
-       - Cross-curricular projects with detailed implementation plans
-       - Community partnership activities and contact information
-       - Field trip or virtual field trip connections
-       - Guest speaker suggestions with preparation guides
-       - Technology integration with tutorials
-       - Cultural competency integration
-       - Social justice and equity connections
+## 6. Assessment Systems:
+- Diagnostic (pre-assessment)
+- Hourly formative assessments
+- Summative assessments
+- Alternative assessments for neurodivergent students
+- Student self-assessments and peer-assessments
+- Rubrics for all major performance tasks
 
-    8. Reflection, Data Analysis, and Continuous Improvement:
-       - Daily teacher reflection templates
-       - Student feedback collection methods
-       - Data tracking spreadsheets
-       - Reteaching plans based on common misconceptions
-       - Long-term tracking of student progress
-       - Professional development needs identification
+---
 
-    9. Supplementary Materials Section:
-       - All worksheets with answer keys
-       - PowerPoint/Google Slides presentations
-       - Video links with time stamps for relevant segments
-       - Interactive digital resources
-       - Manipulatives templates
-       - Assessment templates and rubrics
-       - Parent communication templates
+## 7. Home-School Partnership:
+- Sample homework/extension ideas
+- Weekly family newsletters (sample content)
+- Home-based projects
+- Parent communication templates (emails, app messages)
 
-    Format Requirements:
-    - Use clear headings and subheadings for easy navigation
-    - Include timing breakdowns to the minute
-    - Provide both digital and printed format options
-    - Include hyperlinks to all digital resources
-    - Create copy-and-paste ready sections for communications
-    - Ensure all materials are accessible and ADA compliant
-    - Include bibliography of educational research supporting methodologies
+---
 
-    The final lesson plan should be comprehensive enough that any substitute teacher could successfully implement it with minimal additional preparation, while also providing enough depth for experienced teachers to adapt and enhance based on their classroom needs.
+## 8. Supplementary Resources Section:
+- Worksheets (with answer keys)
+- Slide decks
+- Interactive simulations/videos (with links)
+- Digital accessibility considerations (ADA compliance)
+- Bibliography of instructional strategies used
+
+---
+
+## FORMAT REQUIREMENTS:
+- Clear headings for each section
+- Bullet points for clarity
+- Timings broken down minute-by-minute
+- Hyperlinks to digital tools
+- Ready-to-print or ready-to-copy communication templates
+- Substitute-ready design: assumes no prior knowledge needed
+- Inclusive language throughout
+
+---
+
+The final lesson plan must reflect:
+- Equity
+- Accessibility
+- Differentiation
+- Cultural responsiveness
+- Evidence-based best practices
+- Student empowerment
+
+Create a plan that is BOTH deeply **structured** and **adaptable** for maximum impact in a real-world classroom.
     """
             
         elif request.tool_type == "assessment":
@@ -1180,11 +1177,17 @@ class QuizResponse(QuizBase):
             except:
                 return []
         return value
+    
+class Card(BaseModel):
+    front: str
+    back: str
+    tags: List[str]
+    difficulty: str
 
 class FlashcardBase(BaseModel):
     title: str
     course_id: Optional[int] = None
-    cards: List[Dict[str, str]]
+    cards: List[Card]
 
 class FlashcardCreate(FlashcardBase):
     pass
@@ -1206,35 +1209,20 @@ class FlashcardResponse(FlashcardBase):
                 return []
         return value
 
-class ChatMessage(BaseModel):
-    role: str  # "user" or "assistant"
-    content: str
-    timestamp: datetime = datetime.utcnow()
+class ChatRequest(BaseModel):
+    user_input: str
 
-# New endpoints
+class ChatResponse(BaseModel):
+    sentiment: str
+    response: str
+
+
 @app.post("/courses", response_model=CourseResponse)
 def create_course(
     course: CourseCreate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    # Generate personalized course content using AI
-    system_message = f"""You are an expert curriculum designer. Create a personalized course 
-    on the subject "{course.subject}" tailored for {course.learning_style} learners at 
-    {course.difficulty_level} level with a {course.pace} pace."""
-    
-    user_message = f"""
-    Create a comprehensive course structure with modules, lessons, and interactive elements.
-    Format the response as a JSON structure with:
-    - modules (array of modules)
-      - title
-      - lessons (array of lessons)
-        - title
-        - content (primary content)
-        - interactive_elements (quizzes, exercises)
-        - knowledge_checks (comprehension questions)
-    """
-    
     try:
         # Check if OpenAI API key is set
         if not openai.api_key:
@@ -1243,48 +1231,134 @@ def create_course(
                 detail="OpenAI API key not configured"
             )
         
+        # Enhanced system message with detailed instructions
+        system_message = f"""You are an expert curriculum designer with expertise in creating engaging, structured learning experiences.
+
+Your task is to create a comprehensive, well-structured course on "{course.subject}" tailored specifically for {course.learning_style} learners at a {course.difficulty_level} level with a {course.pace} pace.
+
+The course content must be detailed, informative, and include clear explanations, relevant examples, and engaging interactive elements. Each lesson should have a logical flow and build upon previous knowledge.
+
+The content must be formatted with proper HTML tags for rich rendering. Use <h3>, <p>, <ul>, <li>, <code>, <pre>, <em>, <strong> tags appropriately to enhance readability and visual structure.
+
+Your response must be in valid JSON format with the exact structure specified in the user's message.
+"""
+        
+        # Enhanced user message with specific guidance and examples
+        user_message = f"""
+Create a comprehensive course titled "{course.title}" with the following specifications:
+- Subject: {course.subject}
+- Difficulty Level: {course.difficulty_level}
+- Learning Style: {course.learning_style}
+- Pace: {course.pace}
+
+Return ONLY a valid JSON object with the following structure:
+
+{{
+  "modules": [
+    {{
+      "title": "Module Title",
+      "lessons": [
+        {{
+          "title": "Lesson Title",
+          "content": "<p>Detailed HTML-formatted lesson content with rich explanations, examples, and visuals.</p><h3>Section Heading</h3><p>More detailed content...</p>",
+          "interactive_elements": "<div class='interactive-exercise'><p>Instructions for the interactive exercise...</p></div>",
+          "knowledge_checks": [
+            {{
+              "type": "multiple_choice",
+              "question": "Detailed question text?",
+              "options": ["Option A", "Option B", "Option C", "Option D"],
+              "correct_answer": "Option A"
+            }}
+          ]
+        }}
+      ]
+    }}
+  ]
+}}
+
+Key requirements:
+
+1. Create 10 modules that follow a logical progression
+2. Each module should have 5 lessons
+3. Each lesson must include:
+   - Detailed HTML-formatted content (800+ words) with proper section headings
+   - At least one interactive element for practice
+   - 3 multiple-choice knowledge check questions
+
+For example, a lesson on "Introduction to Python" might include:
+- Content with sections on "What is Python", "Key Features", "Installation Guide"
+- Interactive elements with a simple code exercise
+- Knowledge checks about Python's features and use cases
+
+DO NOT include any explanatory text before or after the JSON. Return ONLY valid JSON.
+"""
+        
+        # Make the API call with increased max_tokens and adjusted temperature
         response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
+            model="gpt-3.5-turbo",  # Using a model with larger context
             messages=[
                 {"role": "system", "content": system_message},
                 {"role": "user", "content": user_message}
             ],
-            temperature=0.7
+            temperature=0.5,  # Lower temperature for more structured output
+            max_tokens=4000,  # Increased for larger course content
+            top_p=0.95,
+            frequency_penalty=0,
+            presence_penalty=0
         )
         
+        # Extract the response content
         course_content = response.choices[0].message.content
+        print(f"AI Response: {course_content[:500]}...")  # Log first part of response
         
-        # Validate that the response is valid JSON
+        # Clean up the response to extract valid JSON
+        # First, try direct JSON parsing
         try:
             content_json = json.loads(course_content)
-        except json.JSONDecodeError:
-            # Fallback content if JSON parsing fails
-            content_json = {
-                "modules": [
-                    {
-                        "title": f"Introduction to {course.subject}",
-                        "lessons": [
-                            {
-                                "title": "Getting Started",
-                                "content": "Welcome to the course!",
-                                "interactive_elements": [],
-                                "knowledge_checks": []
-                            }
-                        ]
-                    }
-                ]
-            }
+        except json.JSONDecodeError as e:
+            print(f"JSON parse error: {e}")
+            
+            # Try to extract JSON if wrapped in code blocks
+            match = re.search(r'```json\s*([\s\S]*?)\s*```', course_content)
+            if match:
+                try:
+                    content_json = json.loads(match.group(1))
+                except json.JSONDecodeError as inner_e:
+                    print(f"Failed to parse JSON from code block: {inner_e}")
+                    # Try to clean up the JSON and retry
+                    cleaned_json = match.group(1).strip().replace('\n', '')
+                    try:
+                        content_json = json.loads(cleaned_json)
+                    except json.JSONDecodeError:
+                        # Fall back to default structure
+                        content_json = create_fallback_content(course)
+            else:
+                # If no code block, try to find JSON-like content with braces
+                try:
+                    # Find content between first { and last }
+                    json_match = re.search(r'({[\s\S]*})', course_content)
+                    if json_match:
+                        potential_json = json_match.group(1)
+                        content_json = json.loads(potential_json)
+                    else:
+                        content_json = create_fallback_content(course)
+                except:
+                    content_json = create_fallback_content(course)
+        
+        # Validate and enrich the structure if needed
+        content_json = validate_course_structure(content_json, course)
         
         # Convert content to string for database storage
         content_string = json.dumps(content_json)
         
+        # Create the course in the database
         db_course = models.Course(
             title=course.title,
             subject=course.subject,
             difficulty_level=course.difficulty_level,
             learning_style=course.learning_style,
             pace=course.pace,
-            content=content_string,  # Store as string in database
+            content=content_string,
             user_id=current_user.id
         )
         
@@ -1300,11 +1374,73 @@ def create_course(
             detail=f"Failed to generate course content: {str(e)}"
         )
     except Exception as e:
+        print(f"Error in course creation: {str(e)}")
+        traceback.print_exc()
         db.rollback()
         raise HTTPException(
             status_code=500,
             detail=f"Error creating course: {str(e)}"
         )
+
+def create_fallback_content(course):
+    """Create a minimal course structure if AI generation fails"""
+    return {
+        "modules": [
+            {
+                "title": f"Introduction to {course.subject}",
+                "lessons": [
+                    {
+                        "title": "Getting Started",
+                        "content": f"<h3>Welcome to {course.title}</h3><p>This course will introduce you to the fundamentals of {course.subject}. We'll explore key concepts, practical applications, and build your skills progressively.</p><p>This is a placeholder content that will be expanded with more detailed information.</p>",
+                        "interactive_elements": "<div class='interactive-exercise'><p>Think about how you might apply {course.subject} in your work or studies. What specific problems could you solve?</p></div>",
+                        "knowledge_checks": [
+                            {
+                                "type": "multiple_choice",
+                                "question": f"What is your primary goal for learning {course.subject}?",
+                                "options": ["Professional development", "Academic requirement", "Personal interest", "Specific project needs"],
+                                "correct_answer": "Personal interest"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+
+def validate_course_structure(content, course):
+    """Validate and ensure the course content meets minimum requirements"""
+    # Set default if structure is completely wrong
+    if not isinstance(content, dict) or "modules" not in content or not isinstance(content["modules"], list):
+        return create_fallback_content(course)
+    
+    # Ensure each module has required fields
+    for i, module in enumerate(content["modules"]):
+        if "title" not in module or not module["title"]:
+            module["title"] = f"Module {i+1}: {course.subject} Topics"
+        
+        if "lessons" not in module or not isinstance(module["lessons"], list):
+            module["lessons"] = [{
+                "title": "Introduction",
+                "content": f"<h3>Introduction to {module['title']}</h3><p>This is a placeholder lesson for {module['title']}.</p>",
+                "interactive_elements": "",
+                "knowledge_checks": []
+            }]
+        
+        # Ensure each lesson has required fields
+        for j, lesson in enumerate(module["lessons"]):
+            if "title" not in lesson or not lesson["title"]:
+                lesson["title"] = f"Lesson {j+1}"
+            
+            if "content" not in lesson or not lesson["content"]:
+                lesson["content"] = f"<h3>{lesson['title']}</h3><p>This is placeholder content for {lesson['title']}.</p>"
+            
+            if "interactive_elements" not in lesson:
+                lesson["interactive_elements"] = ""
+            
+            if "knowledge_checks" not in lesson or not isinstance(lesson["knowledge_checks"], list):
+                lesson["knowledge_checks"] = []
+    
+    return content
 
 # Update your get_courses endpoint to handle JSON parsing if needed
 @app.get("/courses/{course_id}", response_model=CourseResponse)
@@ -1334,7 +1470,7 @@ def generate_quiz(
     Create a quiz that targets specific knowledge gaps and reinforces understanding."""
     
     user_message = f"""
-    Create a quiz for the following specifications:
+    Create a quiz with 10 questions for the following specifications:
     Subject: {quiz_data.get('subject')}
     Difficulty: {quiz_data.get('difficulty_level')}
     Topics to focus on: {json.dumps(quiz_data.get('topics', []))}
@@ -1439,77 +1575,46 @@ def generate_flashcards(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/tutor/chat")
-async def chat_with_tutor(
-    message: dict,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Interactive AI tutor endpoint"""
-    conversation_id = message.get('conversation_id')
-    course_id = message.get('course_id')
-    user_message = message.get('content')
-    
-    # Get or create conversation
-    if conversation_id:
-        conversation = db.query(models.ChatConversation).filter(
-            models.ChatConversation.id == conversation_id,
-            models.ChatConversation.user_id == current_user.id
-        ).first()
-        if not conversation:
-            raise HTTPException(status_code=404, detail="Conversation not found")
-        messages = json.loads(conversation.messages)
-    else:
-        messages = []
-        conversation = models.ChatConversation(
-            user_id=current_user.id,
-            course_id=course_id,
-            messages=json.dumps(messages)
-        )
-        db.add(conversation)
-        db.commit()
-        db.refresh(conversation)
-    
-    # Add user message to history
-    messages.append({"role": "user", "content": user_message})
-    
-    # Create system message for AI tutor
-    system_message = """You are an empathetic AI tutor. Your role is to:
-    1. Answer questions clearly and patiently
-    2. Provide encouragement and positive reinforcement
-    3. Break down complex concepts into simpler parts
-    4. Offer examples and analogies
-    5. Guide students to discover answers rather than just giving answers
-    Always maintain a friendly, supportive, and teacher-like tone."""
-    
+def analyze_emotion(text: str) -> str:
     try:
-        # Get AI response
-        response = openai.ChatCompletion.create(
+        transformer_result = emotion_classifier(text)[0]
+        blob = TextBlob(text)
+        polarity = blob.sentiment.polarity
+
+        if transformer_result['score'] > 0.6:
+            return transformer_result['label'].lower()
+        elif polarity < -0.3:
+            return "stressed"
+        elif polarity > 0.3:
+            return "confident"
+        else:
+            return "neutral"
+    except Exception as e:
+        print("Emotion detection error:", e)
+        raise HTTPException(status_code=500, detail=f"Emotion detection failed: {e}")
+
+PROMPT_TEMPLATES = {
+    "stressed": "You are a kind and patient tutor. Explain slowly, offer encouragement, and make sure the student feels supported. Question: {question}",
+    "confident": "You are a challenging tutor. Ask deeper follow-up questions and encourage critical thinking. Question: {question}",
+    "disengaged": "You are a fun and energetic tutor. Use analogies, humor, or games to re-engage the student. Question: {question}",
+    "curious": "You are an inspiring tutor. Connect the topic to real-world ideas and exploration. Question: {question}",
+    "neutral": "You are a helpful tutor. Provide a clear and concise explanation. Question: {question}",
+}
+
+async def generate_response(user_input: str, emotion: str) -> str:
+    prompt = PROMPT_TEMPLATES.get(emotion, PROMPT_TEMPLATES['neutral']).format(question=user_input)
+    try:
+        completion = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": system_message},
-                *messages  # Include conversation history
-            ],
-            temperature=0.7
+                {"role": "system", "content": "You are a helpful educational assistant."},
+                {"role": "user", "content": prompt}
+            ]
         )
-        
-        ai_response = response.choices[0].message.content
-        
-        # Add AI response to history
-        messages.append({"role": "assistant", "content": ai_response})
-        
-        # Update conversation
-        conversation.messages = json.dumps(messages)
-        db.commit()
-        
-        return {
-            "conversation_id": conversation.id,
-            "response": ai_response
-        }
-        
+        return completion.choices[0].message["content"].strip()
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
+        print("GPT generation error:", e)
+        raise HTTPException(status_code=500, detail=f"GPT generation failed: {e}")
 
 # Add these endpoints to your main.py
 
@@ -1542,6 +1647,184 @@ def get_flashcards(
         models.FlashcardSet.user_id == current_user.id
     ).all()
     return flashcards
+
+@app.get("/courses/{course_id}/progress", response_model=Dict)
+def get_course_progress(
+    course_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    # Check if course exists and belongs to user
+    course = db.query(models.Course).filter(
+        models.Course.id == course_id,
+        models.Course.user_id == current_user.id
+    ).first()
+    
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+    
+    # Get or create progress record
+    progress = db.query(models.CourseProgress).filter(
+        models.CourseProgress.course_id == course_id,
+        models.CourseProgress.user_id == current_user.id
+    ).first()
+    
+    if not progress:
+        # Initialize with empty progress
+        progress = models.CourseProgress(
+            user_id=current_user.id,
+            course_id=course_id,
+            progress_percentage=0,
+            completed_modules=json.dumps([]),
+            current_module="0"
+        )
+        db.add(progress)
+        db.commit()
+        db.refresh(progress)
+    
+    # Convert JSON string to list if needed
+    completed_modules = progress.completed_modules
+    if isinstance(completed_modules, str):
+        try:
+            completed_modules = json.loads(completed_modules)
+        except:
+            completed_modules = []
+    
+    return {
+        "completed_modules": completed_modules,
+        "current_module": progress.current_module,
+        "progress_percentage": progress.progress_percentage
+    }
+@app.post("/courses/{course_id}/progress", response_model=Dict)
+def update_course_progress(
+    course_id: int,
+    progress_data: dict,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    # Check if course exists and belongs to user
+    course = db.query(models.Course).filter(
+        models.Course.id == course_id,
+        models.Course.user_id == current_user.id
+    ).first()
+    
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+    
+    # Get or create progress record
+    progress = db.query(models.CourseProgress).filter(
+        models.CourseProgress.course_id == course_id,
+        models.CourseProgress.user_id == current_user.id
+    ).first()
+    
+    if not progress:
+        progress = models.CourseProgress(
+            user_id=current_user.id,
+            course_id=course_id
+        )
+        db.add(progress)
+    
+    # Update progress fields
+    if "completed_modules" in progress_data:
+        completed_modules = progress_data["completed_modules"]
+        progress.completed_modules = json.dumps(completed_modules) if isinstance(completed_modules, list) else completed_modules
+    
+    if "current_module" in progress_data:
+        progress.current_module = str(progress_data["current_module"])
+    
+    if "progress_percentage" in progress_data:
+        progress.progress_percentage = float(progress_data["progress_percentage"])
+    
+    progress.last_accessed = datetime.utcnow()
+    
+    db.commit()
+    db.refresh(progress)
+    
+    # Return updated progress
+    return {
+        "completed_modules": json.loads(progress.completed_modules) if isinstance(progress.completed_modules, str) else progress.completed_modules,
+        "current_module": progress.current_module,
+        "progress_percentage": progress.progress_percentage
+    }
+# Run the application with uvicorn
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+
+
+from transformers import pipeline
+from textblob import TextBlob
+from pydantic import BaseModel
+from fastapi import HTTPException
+
+# Load OpenAI key from environment
+import openai, os
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+# Load HuggingFace model for emotion classification
+emotion_classifier = pipeline("text-classification", model="bhadresh-savani/distilbert-base-uncased-emotion")
+
+# Pydantic request/response models
+class ChatRequest(BaseModel):
+    user_input: str
+
+class ChatResponse(BaseModel):
+    sentiment: str
+    response: str
+
+# Emotion analysis function
+def analyze_emotion(text: str) -> str:
+    try:
+        transformer_result = emotion_classifier(text)[0]
+        blob = TextBlob(text)
+        polarity = blob.sentiment.polarity
+
+        if transformer_result['score'] > 0.6:
+            return transformer_result['label'].lower()
+        elif polarity < -0.3:
+            return "stressed"
+        elif polarity > 0.3:
+            return "confident"
+        else:
+            return "neutral"
+    except Exception as e:
+        print("Emotion detection error:", e)
+        raise HTTPException(status_code=500, detail=f"Emotion detection failed: {e}")
+
+# Prompt templates
+PROMPT_TEMPLATES = {
+    "stressed": "You are a kind and patient tutor. Explain slowly, offer encouragement, and make sure the student feels supported. Question: {question}",
+    "confident": "You are a challenging tutor. Ask deeper follow-up questions and encourage critical thinking. Question: {question}",
+    "disengaged": "You are a fun and energetic tutor. Use analogies, humor, or games to re-engage the student. Question: {question}",
+    "curious": "You are an inspiring tutor. Connect the topic to real-world ideas and exploration. Question: {question}",
+    "neutral": "You are a helpful tutor. Provide a clear and concise explanation. Question: {question}",
+}
+
+# GPT response generator
+async def generate_response(user_input: str, emotion: str) -> str:
+    prompt = PROMPT_TEMPLATES.get(emotion, PROMPT_TEMPLATES['neutral']).format(question=user_input)
+    try:
+        completion = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are a helpful educational assistant."},
+                {"role": "user", "content": prompt}
+            ]
+        )
+        return completion.choices[0].message["content"].strip()
+    except Exception as e:
+        print("GPT generation error:", e)
+        raise HTTPException(status_code=500, detail=f"GPT generation failed: {e}")
+
+# FastAPI endpoint
+@app.post("/chat/emotion-aware", response_model=ChatResponse)
+async def emotion_aware_chat(req: ChatRequest):
+    print(f"Received input: {req.user_input}")
+    sentiment = analyze_emotion(req.user_input)
+    print(f"Detected sentiment: {sentiment}")
+    gpt_response = await generate_response(req.user_input, sentiment)
+    print(f"GPT response: {gpt_response}")
+    return ChatResponse(sentiment=sentiment, response=gpt_response)
 
 # Run the application with uvicorn
 if __name__ == "__main__":

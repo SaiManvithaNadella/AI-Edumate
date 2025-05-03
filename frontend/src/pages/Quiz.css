@@ -114,7 +114,7 @@
   
   .option {
     padding: 1rem;
-    background-color: var(--background-light);
+    background-color: #fff3e0;
     border: 2px solid transparent;
     border-radius: var(--border-radius);
     cursor: pointer;
@@ -183,11 +183,11 @@
   }
   
   .question-review.correct {
-    background-color: #e8f5e9;
+    background-color: #000000;
   }
   
   .question-review.incorrect {
-    background-color: #ffebee;
+    background-color: #000000;
   }
   
   .explanation {

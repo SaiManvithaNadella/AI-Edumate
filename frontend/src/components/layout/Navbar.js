@@ -11,7 +11,7 @@ const Navbar = () => {
     <nav className="navbar">
       <div className="navbar-brand">
         <Link to="/">
-          <h1>AI-Edumate</h1>
+        <h1><img src="/ai-edumate-logo.png"/>AI-Edumate</h1>
         </Link>
       </div>
       <div className="navbar-menu">

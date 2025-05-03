@@ -1,0 +1,29 @@
+.lesson-plan-detail {
+    max-width: 900px;
+    margin: 2rem auto;
+    background: var(--background-white);
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .lesson-plan-detail h2 {
+    margin-bottom: 1rem;
+  }
+  
+  .meta p {
+    margin: 0.25rem 0;
+  }
+  
+  .objectives, .materials, .content {
+    margin-top: 2rem;
+  }
+  
+  .content-body {
+    margin-top: 1rem;
+    background: var(--background-light);
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    white-space: pre-wrap;
+  }
+  

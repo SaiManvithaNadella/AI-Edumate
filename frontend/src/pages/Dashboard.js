@@ -231,7 +231,7 @@ const Dashboard = () => {
     <div className="dashboard">
       <header className="dashboard-header">
         <h2>Welcome, {user.name}!</h2>
-        <p>Here's what's happening with your education adventure!</p>
+        <p>Here's what's happening with your learning/teaching adventure!</p>
       </header>
       
       <section className="stats-section">

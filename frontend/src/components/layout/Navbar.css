@@ -122,4 +122,9 @@
   .dropdown-menu button:hover {
     background-color: var(--background-light);
   }
-  
+
+  .navbar-brand img {
+    height: 40px;
+    margin-right: 0.5rem;
+    vertical-align: middle;
+  }

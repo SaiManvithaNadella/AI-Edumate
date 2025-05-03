@@ -47,10 +47,8 @@ const AiTutor = () => {
     setIsLoading(true);
     
     try {
-      const response = await api.post('/tutor/chat', {
-        conversation_id: conversationId,
-        course_id: selectedCourse?.id,
-        content: inputMessage
+      const response = await api.post('/chat/emotion-aware', {
+        user_input: inputMessage
       });
       
       // Update conversation ID if this is a new chat
